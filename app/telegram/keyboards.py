@@ -28,3 +28,10 @@ kb_menu = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=False)
 kb_menu.add(KeyboardButton(TextsKbs.menu_transfer))
 kb_menu.add(KeyboardButton(TextsKbs.menu_orders), KeyboardButton(TextsKbs.menu_settings))
 kb_menu.add(KeyboardButton(TextsKbs.menu_help))
+
+kb_settings = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=False)
+kb_settings.add(KeyboardButton(TextsKbs.settings_fullname))
+kb_settings.add(KeyboardButton(TextsKbs.back))
+
+kb_back = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=False)
+kb_back.add(KeyboardButton(TextsKbs.back))
