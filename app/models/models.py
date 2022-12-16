@@ -31,6 +31,9 @@ class Customer(BaseModel):
     id = PrimaryKeyField()
     user_id = BigIntegerField()
     username = CharField(max_length=64, null=True)
+    first_name = CharField(max_length=128, null=True, default=None)
+    second_name = CharField(max_length=128, null=True, default=None)
+    patronymic = CharField(max_length=128, null=True, default=None)
     datetime = DateTimeField()
 
     class Meta:

@@ -15,11 +15,17 @@
 #
 
 
+from datetime import datetime
+
 from aiogram import Bot, Dispatcher, types
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
+from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
 from aiogram.utils import executor
 
-from config import TG_KEY
+from app.models import Customer
+from app.telegram.form import Form
+from app.telegram.keyboards import kb_registration_complete, kb_menu
+from config import TG_KEY, Texts, TextsKbs
 
 bot = Bot(token=TG_KEY)
 storage = MemoryStorage()
@@ -28,7 +34,83 @@ dp = Dispatcher(bot, storage=storage)
 
 @dp.message_handler()
 async def start(message: types.Message):
-    await message.answer("Hello, world!")
+    user_id = message.from_user.id
+    text = message.text
+    customer = Customer.get_or_none(Customer.user_id == user_id)
+
+    # Start registration
+    if not customer:
+        username = message.from_user.username
+
+        customer = Customer(user_id=user_id, username=username, datetime=datetime.now())
+        customer.save()
+
+        await message.reply(Texts.welcome)
+
+        # Create keyboard & send message
+        kb = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
+        tg_first_name = message.from_user.first_name
+        if tg_first_name:
+            kb_btn = KeyboardButton(tg_first_name)
+            kb.add(kb_btn)
+        await message.answer(Texts.first_name, reply_markup=kb)
+
+    # Enter first name
+    elif not customer.first_name:
+        customer.first_name = text
+        customer.save()
+
+        # Create keyboard & send message
+        kb = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
+        tg_second_name = message.from_user.last_name
+        if tg_second_name:
+            kb_btn = KeyboardButton(tg_second_name)
+            kb.add(kb_btn)
+        await message.reply(Texts.second_name.format(customer.first_name), reply_markup=kb)
+
+    # Enter second name
+    elif not customer.second_name:
+        customer.second_name = text
+        customer.save()
+
+        await message.reply(Texts.patronymic.format(customer.first_name))
+
+    # Enter patronymic
+    elif not customer.patronymic:
+        customer.patronymic = text
+        customer.save()
+
+        await message.reply(Texts.registration_complete.format(customer.first_name,
+                                                               customer.second_name,
+                                                               customer.patronymic),
+                            reply_markup=kb_registration_complete)
+
+    # Error registration, go to start
+    elif text == TextsKbs.registration_complete_err:
+        # Delete data
+        customer.first_name = None
+        customer.second_name = None
+        customer.patronymic = None
+        customer.save()
+        await message.reply(Texts.registration_complete_err, reply_markup=kb_menu)
+
+        # Create keyboard & send message
+        kb = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
+        tg_first_name = message.from_user.first_name
+        if tg_first_name:
+            kb_btn = KeyboardButton(tg_first_name)
+            kb.add(kb_btn)
+        await message.answer(Texts.first_name, reply_markup=kb)
+
+    # Success registration, go to menu
+    elif text == TextsKbs.registration_complete_suc:
+        await Form.menu.set()
+        await message.reply(Texts.registration_complete_suc, reply_markup=kb_menu)
+
+    # Account exists, go to menu
+    else:
+        await Form.menu.set()
+        await message.reply(Texts.menu, reply_markup=kb_menu)
 
 
 def start_bot():
