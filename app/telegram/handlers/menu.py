@@ -15,9 +15,12 @@
 #
 
 
-from aiogram import types
+from datetime import datetime
 
-from app.models import Customer
+from aiogram import types
+from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
+
+from app.models import Customer, Order, Currency
 from app.telegram import Form
 from app.telegram.keyboards import kb_settings
 from config import Texts, TextsKbs, TG_HELPER
@@ -29,14 +32,24 @@ async def menu(message: types.Message):
     customer = Customer.get(Customer.user_id == user_id)
 
     if text == TextsKbs.menu_transfer:
-        pass
+        order = Order(customer=customer, datetime=datetime.now())
+        order.save()
+        await Form.order.set()
+
+        # Create keyboard & send message
+        kb = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=False)
+        for currency in Currency.select():
+            kb_btn = KeyboardButton(currency.name)
+            kb.add(kb_btn)
+        kb.add(TextsKbs.back)
+        await message.reply(Texts.transfer_currency_exchangeable, reply_markup=kb)
+
     elif text == TextsKbs.menu_orders:
         pass
     elif text == TextsKbs.menu_settings:
         await Form.settings.set()
         await message.reply(Texts.menu_settings.format(first_name=customer.first_name,
-                                                       second_name=customer.second_name,
-                                                       patronymic=customer.patronymic), reply_markup=kb_settings)
+                                                       second_name=customer.second_name), reply_markup=kb_settings)
     elif text == TextsKbs.menu_help:
         await message.reply(Texts.menu_help.format(TG_HELPER))
     else:

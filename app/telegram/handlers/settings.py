@@ -1,3 +1,20 @@
+#
+# (c) 2022, Yegor Yakubovich
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+
+
 from aiogram import types
 from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
 
@@ -19,7 +36,6 @@ async def settings(message: types.Message):
         # Delete data
         customer.first_name = None
         customer.second_name = None
-        customer.patronymic = None
         customer.save()
 
         await Form.settings_fullname.set()
@@ -56,13 +72,6 @@ async def settings_fullname(message: types.Message):
     # Enter second name
     elif not customer.second_name:
         customer.second_name = text
-        customer.save()
-
-        await message.reply(Texts.settings_fullname_patronymic)
-
-    # Enter patronymic
-    elif not customer.patronymic:
-        customer.patronymic = text
         customer.save()
 
         await Form.settings.set()

@@ -66,16 +66,8 @@ async def start(message: types.Message):
         customer.second_name = text
         customer.save()
 
-        await message.reply(Texts.patronymic.format(customer.first_name))
-
-    # Enter patronymic
-    elif not customer.patronymic:
-        customer.patronymic = text
-        customer.save()
-
         await message.reply(Texts.registration_complete.format(customer.first_name,
-                                                               customer.second_name,
-                                                               customer.patronymic),
+                                                               customer.second_name),
                             reply_markup=kb_registration_complete)
 
     # Error registration, go to start
@@ -83,7 +75,6 @@ async def start(message: types.Message):
         # Delete data
         customer.first_name = None
         customer.second_name = None
-        customer.patronymic = None
         customer.save()
         await message.reply(Texts.registration_complete_err, reply_markup=kb_menu)
 
