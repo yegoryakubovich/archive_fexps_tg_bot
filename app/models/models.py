@@ -24,6 +24,12 @@ from config import DB_NAME, DB_USER, DB_PASSWORD, DB_HOST, DB_PORT
 db = MySQLDatabase(DB_NAME, user=DB_USER, password=DB_PASSWORD, host=DB_HOST, port=DB_PORT, charset='utf8mb4')
 
 
+class PaidStatus:
+    waiting = 'WAITING'
+    paid = 'PAID'
+    confirmed = 'CONFIRMED'
+
+
 class BaseModel(Model):
     class Meta:
         database = db
@@ -82,7 +88,7 @@ class Order(BaseModel):
     currency_received_value = FloatField(null=True, default=None)
     rate = FloatField(default=0)
     currency_method = ForeignKeyField(CurrencyMethod, to_field='id', on_delete='cascade', null=True, default=None)
-    is_paid = BooleanField(default=False)
+    paid_status = CharField(max_length=16, null=True, default=None)
     is_completed = BooleanField(default=False)
     datetime = DateTimeField()
     datetime_paid = DateTimeField(null=True, default=None)

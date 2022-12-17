@@ -18,7 +18,8 @@
 from aiogram import types
 from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
 
-from app.models import Customer, Order, Currency, Rate
+from app.models import Customer, Order, Currency, Rate, CurrencyMethod
+from app.models.models import PaidStatus
 from app.telegram import Form
 from app.telegram.keyboards import kb_menu, kb_back
 from config import TextsKbs, Texts, TG_HELPER
@@ -44,7 +45,7 @@ async def hdl_order(message: types.Message):
         # Detect currency
         currency_exchangeable = Currency.get_or_none(Currency.name == text)
         if not currency_exchangeable:
-            await message.reply(Texts.error_currency)
+            await message.reply(Texts.error_order_currency)
             return
         order.currency_exchangeable = currency_exchangeable
         order.save()
@@ -64,8 +65,9 @@ async def hdl_order(message: types.Message):
         # Detect currency
         currency_received = Currency.get_or_none(Currency.name == text)
         if not currency_received or currency_received == order.currency_exchangeable:
-            await message.reply(Texts.error_currency)
+            await message.reply(Texts.error_order_currency)
             return
+
         order.currency_received = currency_received
         order.save()
 
@@ -85,10 +87,11 @@ async def hdl_order(message: types.Message):
                 currency_exchangeable=order.currency_exchangeable.name,
                 currency_received=order.currency_received.name
             ), reply_markup=kb_back)
+
     # Enter currency exchangeable value
     elif not order.currency_exchangeable_value:
         if not text.isdigit():
-            await message.reply(Texts.error_currency_value)
+            await message.reply(Texts.error_order_currency_value)
             return
 
         value = int(text)
@@ -103,7 +106,7 @@ async def hdl_order(message: types.Message):
 
         # Errors
         if not rate:
-            await message.reply(Texts.error_rate_not_exists)
+            await message.reply(Texts.error_order_rate_not_exists)
 
             # Close order & back to menu
             order.is_closed = True
@@ -114,7 +117,7 @@ async def hdl_order(message: types.Message):
             return
 
         elif rate.only_admin:
-            await message.reply(Texts.error_rate_only_admin.format(TG_HELPER))
+            await message.reply(Texts.error_order_rate_only_admin.format(TG_HELPER))
 
             # Close order & back to menu
             order.is_closed = True
@@ -135,9 +138,29 @@ async def hdl_order(message: types.Message):
             currency_received_value=order.currency_received_value,
         ), reply_markup=kb_back)
 
+        kb = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=False)
+        for currency_method in CurrencyMethod.select().where(CurrencyMethod.active == True):
+            kb.add(KeyboardButton(currency_method.name))
+        kb.add(KeyboardButton(TextsKbs.back))
+        await message.answer(Texts.order_currency_method, reply_markup=kb)
+
+    elif not order.currency_method:
+        currency_method = CurrencyMethod.get_or_none((CurrencyMethod.active == True) &
+                                                     (CurrencyMethod.name == text))
+        if not currency_method:
+            await message.reply(Texts.error_order_currency_method)
+            return
+
+        order.currency_method = currency_method
+        order.paid_status = PaidStatus.waiting
+        order.save()
+
+        await message.reply(Texts.order_currency_description.format(order.currency_method.description),
+                            reply_markup=kb_back)
+
     else:
         # Dev
-        await message.reply(Texts.dev)
+        await message.reply(Texts.error_dev)
 
         # Close order & break menu
         order.is_closed = True

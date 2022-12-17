@@ -35,7 +35,7 @@ HANDLERS = [
     {'handler': start, 'state': None, 'content_types': ['text']},
     {'handler': menu, 'state': Form.menu, 'content_types': ['text']},
     {'handler': settings, 'state': Form.settings, 'content_types': ['text']},
-    {'handler': settings_fullname, 'state': Form.settings_fullname, 'content_types': ['text']},
+    {'handler': settings_fullname, 'state': Form.settings_fullname, 'content_types': ['text', 'photo', 'document']},
     {'handler': hdl_order, 'state': Form.order, 'content_types': ['text']},
 ]
 
