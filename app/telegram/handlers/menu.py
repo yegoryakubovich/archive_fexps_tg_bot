@@ -31,7 +31,7 @@ async def menu(message: types.Message):
     text = message.text
     customer = Customer.get(Customer.user_id == user_id)
 
-    if text == TextsKbs.menu_transfer:
+    if text == TextsKbs.menu_order:
         order = Order(customer=customer, datetime=datetime.now())
         order.save()
         await Form.order.set()
@@ -42,7 +42,7 @@ async def menu(message: types.Message):
             kb_btn = KeyboardButton(currency.name)
             kb.add(kb_btn)
         kb.add(TextsKbs.back)
-        await message.reply(Texts.transfer_currency_exchangeable, reply_markup=kb)
+        await message.reply(Texts.order_currency_exchangeable, reply_markup=kb)
 
     elif text == TextsKbs.menu_orders:
         pass

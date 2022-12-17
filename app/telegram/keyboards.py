@@ -25,7 +25,7 @@ kb_registration_complete.add(KeyboardButton(TextsKbs.registration_complete_suc))
 kb_registration_complete.add(KeyboardButton(TextsKbs.registration_complete_err))
 
 kb_menu = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=False)
-kb_menu.add(KeyboardButton(TextsKbs.menu_transfer))
+kb_menu.add(KeyboardButton(TextsKbs.menu_order))
 kb_menu.add(KeyboardButton(TextsKbs.menu_orders), KeyboardButton(TextsKbs.menu_settings))
 kb_menu.add(KeyboardButton(TextsKbs.menu_help))
 

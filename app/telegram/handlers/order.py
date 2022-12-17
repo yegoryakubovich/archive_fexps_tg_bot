@@ -20,8 +20,8 @@ from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
 
 from app.models import Customer, Order, Currency, Rate
 from app.telegram import Form
-from app.telegram.keyboards import kb_menu
-from config import TextsKbs, Texts
+from app.telegram.keyboards import kb_menu, kb_back
+from config import TextsKbs, Texts, TG_HELPER
 
 
 async def hdl_order(message: types.Message):
@@ -57,7 +57,7 @@ async def hdl_order(message: types.Message):
             kb_btn = KeyboardButton(currency.name)
             kb.add(kb_btn)
         kb.add(TextsKbs.back)
-        await message.reply(Texts.transfer_currency_received, reply_markup=kb)
+        await message.reply(Texts.order_currency_received, reply_markup=kb)
 
     # Enter currency received
     elif not order.currency_received:
@@ -72,26 +72,76 @@ async def hdl_order(message: types.Message):
         text_reply = ''
         for num, rate in enumerate(Rate.select().where((Rate.currency_exchangeable == order.currency_exchangeable) &
                                                        (Rate.currency_received == order.currency_received)), 1):
-            text_reply += '{num}. {currency_exchangeable_from} {currency_exchangeable} - {currency_exchangeable_to} ' \
-                          '{currency_exchangeable} - {currency_received_rate} {currency_received};\n' \
-                .format(num=num, currency_exchangeable_from=rate.currency_exchangeable_from,
-                        currency_exchangeable_to=rate.currency_exchangeable_to,
-                        currency_exchangeable=order.currency_exchangeable.name,
-                        currency_received_rate=rate.rate,
-                        currency_received=order.currency_received.name
-                        )
+            text_reply += Texts.order_rate.format(
+                num=num, currency_exchangeable_from=rate.currency_exchangeable_from,
+                currency_exchangeable_to=rate.currency_exchangeable_to,
+                currency_exchangeable=order.currency_exchangeable.name,
+                currency_received_rate=rate.rate,
+                currency_received=order.currency_received.name
+            )
 
         await message.reply(text_reply)
+        await message.answer(Texts.order_currency_exchangeable_value.format(
+                currency_exchangeable=order.currency_exchangeable.name,
+                currency_received=order.currency_received.name
+            ), reply_markup=kb_back)
+    # Enter currency exchangeable value
+    elif not order.currency_exchangeable_value:
+        if not text.isdigit():
+            await message.reply(Texts.error_currency_value)
+            return
 
+        value = int(text)
+        rate = Rate.get_or_none((Rate.currency_exchangeable == order.currency_exchangeable) &
+                                (Rate.currency_received == order.currency_received) &
+                                (Rate.currency_exchangeable_from <= value) &
+                                (Rate.currency_exchangeable_to >= value))
+
+        # Save changes
+        order.currency_exchangeable_value = value
+        order.save()
+
+        # Errors
+        if not rate:
+            await message.reply(Texts.error_rate_not_exists)
+
+            # Close order & back to menu
+            order.is_closed = True
+            order.save()
+
+            await Form.menu.set()
+            await message.answer(Texts.menu, reply_markup=kb_menu)
+            return
+
+        elif rate.only_admin:
+            await message.reply(Texts.error_rate_only_admin.format(TG_HELPER))
+
+            # Close order & back to menu
+            order.is_closed = True
+            order.save()
+
+            await Form.menu.set()
+            await message.answer(Texts.menu, reply_markup=kb_menu)
+            return
+
+        order.rate = rate.rate
+        order.currency_received_value = order.currency_exchangeable_value * order.rate
+        order.save()
+
+        await message.reply(Texts.order_currency_received_value.format(
+            currency_exchangeable=order.currency_exchangeable.name,
+            currency_exchangeable_value=order.currency_exchangeable_value,
+            currency_received=order.currency_received.name,
+            currency_received_value=order.currency_received_value,
+        ), reply_markup=kb_back)
+
+    else:
         # Dev
-        await message.answer(Texts.dev)
+        await message.reply(Texts.dev)
 
         # Close order & break menu
         order.is_closed = True
         order.save()
 
         await Form.menu.set()
-        await message.reply(Texts.menu, reply_markup=kb_menu)
-
-    else:
-        await message.reply(Texts.error)
+        await message.answer(Texts.menu, reply_markup=kb_menu)

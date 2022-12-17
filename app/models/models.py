@@ -46,7 +46,18 @@ class Currency(BaseModel):
     name = CharField(max_length=16)
 
     class Meta:
-        db_table = "currency"
+        db_table = "currencies"
+
+
+class CurrencyMethod(BaseModel):
+    id = PrimaryKeyField()
+    currency = ForeignKeyField(Currency, to_field='id', on_delete='cascade')
+    name = CharField(max_length=64)
+    description = CharField(max_length=1024)
+    active = BooleanField(default=True)
+
+    class Meta:
+        db_table = "currencies_methods"
 
 
 class Rate(BaseModel):
@@ -70,6 +81,7 @@ class Order(BaseModel):
     currency_exchangeable_value = FloatField(null=True, default=None)
     currency_received_value = FloatField(null=True, default=None)
     rate = FloatField(default=0)
+    currency_method = ForeignKeyField(CurrencyMethod, to_field='id', on_delete='cascade', null=True, default=None)
     is_paid = BooleanField(default=False)
     is_completed = BooleanField(default=False)
     datetime = DateTimeField()

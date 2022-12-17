@@ -76,7 +76,6 @@ async def start(message: types.Message):
         customer.first_name = None
         customer.second_name = None
         customer.save()
-        await message.reply(Texts.registration_complete_err, reply_markup=kb_menu)
 
         # Create keyboard & send message
         kb = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
@@ -84,6 +83,7 @@ async def start(message: types.Message):
         if tg_first_name:
             kb_btn = KeyboardButton(tg_first_name)
             kb.add(kb_btn)
+        await message.reply(Texts.registration_complete_err)
         await message.answer(Texts.first_name, reply_markup=kb)
 
     # Success registration, go to menu

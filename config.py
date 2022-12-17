@@ -52,12 +52,22 @@ class Texts:
     settings_fullname_second_name = 'Введите свою фамилию.'
     settings_fullname = 'Данные успешно изменены!'
 
-    transfer_currency_exchangeable = 'Какую валюту Вы хотите обменять?'
-    transfer_currency_received = 'Какую валюту Вы хотите получить?'
-    transfer_rate = 'Актуальный курс по переводу {currency_exchangeable} => {currency_received}:\n\n{}'
+    order_currency_exchangeable = 'Какую валюту Вы хотите обменять?'
+    order_currency_received = 'Какую валюту Вы хотите получить?'
+    order_rates = 'Актуальный курс по переводу {currency_exchangeable} => {currency_received}:\n\n{}'
+    order_rate = '{num}. {currency_exchangeable_from} {currency_exchangeable} - {currency_exchangeable_to} ' \
+                 '{currency_exchangeable} - {currency_received_rate} {currency_received};\n'
+    order_currency_exchangeable_value = 'Введите сумму в {currency_exchangeable}, которую вы хотите обменять в {' \
+                                        'currency_received}. '
+    order_currency_received_value = 'За {currency_exchangeable_value} {currency_exchangeable} вы получите {' \
+                                    'currency_received_value} {currency_received} '
 
     error = '❌ Возникла ошибка, пожалуйста, повторите попытку.'
     error_currency = '❌ Возникла ошибка, пожалуйста, выберите верную валюту.'
+    error_currency_value = '❌ Возникла ошибка, пожалуйста, введите верное число.'
+    error_rate_not_exists = 'В данный момент мы не можем предложить Вам обмен. Остались вопросы? Напишите в нашу ' \
+                            'поддержку! '
+    error_rate_only_admin = 'Для обмена такой суммы, пожалуйста, обращайтесь к @{}.'
     dev = '👨‍💻 В разработке.'
 
 
@@ -65,7 +75,7 @@ class TextsKbs:
     registration_complete_suc = '✔ Данные верны'
     registration_complete_err = '❌ Начать ввод заново'
 
-    menu_transfer = '💸 Обменять (перевести) деньги'
+    menu_order = '💸 Обменять (перевести) деньги'
     menu_orders = '📦 Мои заказы'
     menu_help = '🙋 Поддержка'
     menu_settings = '⚙ Настройки'
