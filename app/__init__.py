@@ -15,10 +15,15 @@
 #
 
 
+from os import mkdir
+from os.path import exists
+
 from app.models import create_tables
 from app.telegram import start_bot
+from config import DOCS_PATH
 
 
 def create_app():
     create_tables()
+    mkdir(DOCS_PATH) if not exists(DOCS_PATH) else None
     start_bot()

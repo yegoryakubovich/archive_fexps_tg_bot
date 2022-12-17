@@ -19,10 +19,10 @@ from aiogram import types
 from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
 
 from app.models import Customer, Order, Currency, Rate, CurrencyMethod
-from app.models.models import PaidStatus
+from app.models.models import Doc
 from app.telegram import Form
 from app.telegram.keyboards import kb_menu, kb_back
-from config import TextsKbs, Texts, TG_HELPER
+from config import TextsKbs, Texts, TG_HELPER, DOCS_PATH
 
 
 async def hdl_order(message: types.Message):
@@ -144,6 +144,7 @@ async def hdl_order(message: types.Message):
         kb.add(KeyboardButton(TextsKbs.back))
         await message.answer(Texts.order_currency_method, reply_markup=kb)
 
+    # Enter payment method
     elif not order.currency_method:
         currency_method = CurrencyMethod.get_or_none((CurrencyMethod.active == True) &
                                                      (CurrencyMethod.name == text))
@@ -152,19 +153,36 @@ async def hdl_order(message: types.Message):
             return
 
         order.currency_method = currency_method
-        order.paid_status = PaidStatus.waiting
         order.save()
 
         await message.reply(Texts.order_currency_description.format(order.currency_method.description),
                             reply_markup=kb_back)
 
-    else:
-        # Dev
-        await message.reply(Texts.error_dev)
+    # Enter doc
+    elif not order.doc:
+        photo = message.photo
+        document = message.document
 
-        # Close order & break menu
-        order.is_closed = True
+        if photo:
+            extension = 'jpg'
+        elif document:
+            extension = document.file_name.split('.')[-1]
+        else:
+            await message.reply(Texts.error_order_doc, reply_markup=kb_back)
+            return
+
+        doc = Doc(extension=extension)
+        doc.save()
+
+        destination_file = '{}/{}.{}'.format(DOCS_PATH, doc.id, doc.extension)
+        if photo:
+            await photo[-1].download(destination_file=destination_file)
+        elif doc:
+            await document.download(destination_file=destination_file)
+
+        order.doc = doc
         order.save()
 
         await Form.menu.set()
+        await message.reply(Texts.order_doc)
         await message.answer(Texts.menu, reply_markup=kb_menu)

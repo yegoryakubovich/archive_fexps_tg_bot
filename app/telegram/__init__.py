@@ -35,8 +35,8 @@ HANDLERS = [
     {'handler': start, 'state': None, 'content_types': ['text']},
     {'handler': menu, 'state': Form.menu, 'content_types': ['text']},
     {'handler': settings, 'state': Form.settings, 'content_types': ['text']},
-    {'handler': settings_fullname, 'state': Form.settings_fullname, 'content_types': ['text', 'photo', 'document']},
-    {'handler': hdl_order, 'state': Form.order, 'content_types': ['text']},
+    {'handler': settings_fullname, 'state': Form.settings_fullname, 'content_types': ['text']},
+    {'handler': hdl_order, 'state': Form.order, 'content_types': ['text', 'photo', 'document']},
 ]
 
 
@@ -45,7 +45,9 @@ def handlers_create():
 
 
 def orders_close():
-    for order in Order.select().where((Order.is_closed == False) & (Order.rate == 0)):
+    for order in Order.select().where(Order.is_closed == False):
+        if order.doc:
+            continue
         order.is_closed = True
         order.save()
 

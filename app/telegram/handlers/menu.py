@@ -32,6 +32,10 @@ async def menu(message: types.Message):
     customer = Customer.get(Customer.user_id == user_id)
 
     if text == TextsKbs.menu_order:
+        if Order.get_or_none((Order.customer == customer) & (Order.is_closed != True)):
+            await message.reply(Texts.error_menu_order)
+            return
+
         order = Order(customer=customer, datetime=datetime.now())
         order.save()
         await Form.order.set()
