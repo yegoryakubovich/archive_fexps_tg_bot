@@ -31,7 +31,12 @@ kb_menu.add(KeyboardButton(TextsKbs.menu_help))
 
 kb_settings = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=False)
 kb_settings.add(KeyboardButton(TextsKbs.settings_fullname))
+kb_settings.add(KeyboardButton(TextsKbs.settings_requisites))
 kb_settings.add(KeyboardButton(TextsKbs.back))
+
+kb_settings_requisite = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=False)
+kb_settings_requisite.add(KeyboardButton(TextsKbs.settings_requisite_delete))
+kb_settings_requisite.add(KeyboardButton(TextsKbs.back))
 
 kb_back = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=False)
 kb_back.add(KeyboardButton(TextsKbs.back))

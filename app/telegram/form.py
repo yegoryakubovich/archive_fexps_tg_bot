@@ -22,4 +22,5 @@ class Form(StatesGroup):
     menu = State()
     settings = State()
     settings_fullname = State()
+    settings_requisites = State()
     order = State()

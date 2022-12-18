@@ -22,7 +22,7 @@ from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
 
 from app.models import Customer, Order, Currency
 from app.telegram import Form
-from app.telegram.keyboards import kb_settings
+from app.telegram.keyboards import kb_settings, kb_menu
 from config import Texts, TextsKbs, TG_HELPER
 
 
@@ -57,4 +57,4 @@ async def menu(message: types.Message):
     elif text == TextsKbs.menu_help:
         await message.reply(Texts.menu_help.format(TG_HELPER))
     else:
-        await message.reply(Texts.error)
+        await message.reply(Texts.error, reply_markup=kb_menu)

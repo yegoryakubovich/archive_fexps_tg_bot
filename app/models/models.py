@@ -29,6 +29,25 @@ class BaseModel(Model):
         database = db
 
 
+class Currency(BaseModel):
+    id = PrimaryKeyField()
+    name = CharField(max_length=16)
+
+    class Meta:
+        db_table = "currencies"
+
+
+class CurrencyRequisite(BaseModel):
+    id = PrimaryKeyField()
+    currency = ForeignKeyField(Currency, to_field='id', on_delete='cascade')
+    name = CharField(max_length=64)
+    requisite = CharField(max_length=1024)
+    active = BooleanField(default=True)
+
+    class Meta:
+        db_table = "currencies_requisites"
+
+
 class Customer(BaseModel):
     id = PrimaryKeyField()
     user_id = BigIntegerField()
@@ -41,23 +60,15 @@ class Customer(BaseModel):
         db_table = "customers"
 
 
-class Currency(BaseModel):
+class CustomerRequisite(BaseModel):
     id = PrimaryKeyField()
-    name = CharField(max_length=16)
-
-    class Meta:
-        db_table = "currencies"
-
-
-class CurrencyMethod(BaseModel):
-    id = PrimaryKeyField()
+    customer = ForeignKeyField(Customer, to_field='id', on_delete='cascade')
     currency = ForeignKeyField(Currency, to_field='id', on_delete='cascade')
-    name = CharField(max_length=64)
-    description = CharField(max_length=1024)
-    active = BooleanField(default=True)
+    requisite = CharField(max_length=1024, null=True, default=None)
+    is_edited = BooleanField(default=True)
 
     class Meta:
-        db_table = "currencies_methods"
+        db_table = "customers_requisites"
 
 
 class Rate(BaseModel):
@@ -89,7 +100,7 @@ class Order(BaseModel):
     currency_exchangeable_value = FloatField(null=True, default=None)
     currency_received_value = FloatField(null=True, default=None)
     rate = FloatField(default=0)
-    currency_method = ForeignKeyField(CurrencyMethod, to_field='id', on_delete='cascade', null=True, default=None)
+    currency_requisite = ForeignKeyField(CurrencyRequisite, to_field='id', on_delete='cascade', null=True, default=None)
     doc = ForeignKeyField(Doc, to_field='id', on_delete='cascade', null=True, default=None)
     is_paid = BooleanField(default=False)
     is_completed = BooleanField(default=False)

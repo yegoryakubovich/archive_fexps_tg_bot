@@ -18,9 +18,9 @@
 from aiogram import types
 from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
 
-from app.models import Customer
+from app.models import Customer, Currency, CustomerRequisite
 from app.telegram import Form
-from app.telegram.keyboards import kb_menu, kb_settings
+from app.telegram.keyboards import kb_menu, kb_settings, kb_back, kb_settings_requisite
 from config import TextsKbs, Texts
 
 
@@ -32,6 +32,7 @@ async def settings(message: types.Message):
     if text == TextsKbs.back:
         await Form.menu.set()
         await message.reply(Texts.menu, reply_markup=kb_menu)
+
     elif text == TextsKbs.settings_fullname:
         # Delete data
         customer.first_name = None
@@ -47,6 +48,17 @@ async def settings(message: types.Message):
             kb_btn = KeyboardButton(tg_first_name)
             kb.add(kb_btn)
         await message.reply(Texts.settings_fullname_first_name, reply_markup=kb)
+
+    elif text == TextsKbs.settings_requisites:
+        await Form.settings_requisites.set()
+
+        # Create keyboard & send message
+        kb = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
+        for currency in Currency.select():
+            kb.add(KeyboardButton(currency.name))
+        kb.add(KeyboardButton(TextsKbs.back))
+        await message.reply(Texts.settings_requisites, reply_markup=kb)
+
     else:
         await message.reply(Texts.error)
 
@@ -75,4 +87,71 @@ async def settings_fullname(message: types.Message):
         customer.save()
 
         await Form.settings.set()
-        await message.reply(Texts.settings_fullname, reply_markup=kb_settings)
+        await message.reply(Texts.settings_fullname)
+        await message.answer(Texts.menu_settings, reply_markup=kb_settings)
+
+
+async def settings_requisites(message: types.Message):
+    user_id = message.from_user.id
+    text = message.text
+    customer = Customer.get(Customer.user_id == user_id)
+    customer_requisite = CustomerRequisite.get_or_none((CustomerRequisite.customer == customer) &
+                                                       (CustomerRequisite.is_edited == True))
+
+    # Enter requisite
+    if customer_requisite:
+        customer_requisite: CustomerRequisite
+
+        # Delete requisite
+        if (text == TextsKbs.back and customer_requisite.requisite is None) or \
+                text == TextsKbs.settings_requisite_delete:
+            customer_requisite.delete_instance()
+
+            await Form.settings.set()
+            await message.reply(Texts.settings_requisite_deleted)
+            await message.answer(Texts.menu_settings, reply_markup=kb_settings)
+            return
+
+        # Back, requisite save
+        elif text == TextsKbs.back and customer_requisite.requisite:
+            customer_requisite.is_edited = False
+            customer_requisite.save()
+            await Form.settings.set()
+            await message.answer(Texts.menu_settings, reply_markup=kb_settings)
+            return
+
+        # Message added\updated
+        if customer_requisite is None:
+            await message.reply(Texts.settings_requisite_added)
+        else:
+            await message.reply(Texts.settings_requisite_updated)
+
+        # Save data & go to settings
+        customer_requisite.requisite = text
+        customer_requisite.is_edited = False
+        customer_requisite.save()
+
+        await Form.settings.set()
+        await message.answer(Texts.menu_settings, reply_markup=kb_settings)
+        return
+
+    # Enter currency
+    currency = Currency.get_or_none(Currency.name == text)
+    if not currency:
+        await message.reply(Texts.error_currency)
+        return
+
+    customer_requisite = CustomerRequisite.get_or_none((CustomerRequisite.customer == customer) &
+                                                       (CustomerRequisite.currency == currency))
+    if not customer_requisite:
+        customer_requisite = CustomerRequisite(customer=customer, currency=currency)
+        customer_requisite.save()
+
+        await message.reply(Texts.settings_requisite_add, reply_markup=kb_back)
+        return
+
+    customer_requisite.is_edited = True
+    customer_requisite.save()
+    await message.reply(Texts.settings_requisite_update.format(
+        customer_requisite=customer_requisite.requisite,
+    ), reply_markup=kb_settings_requisite)

@@ -18,8 +18,8 @@
 from aiogram import types
 from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
 
-from app.models import Customer, Order, Currency, Rate, CurrencyMethod
-from app.models.models import Doc
+from app.models import Customer, Order, Currency, Rate, CurrencyRequisite
+from app.models.models import Doc, CustomerRequisite
 from app.telegram import Form
 from app.telegram.keyboards import kb_menu, kb_back
 from config import TextsKbs, Texts, TG_HELPER, DOCS_PATH
@@ -45,7 +45,7 @@ async def hdl_order(message: types.Message):
         # Detect currency
         currency_exchangeable = Currency.get_or_none(Currency.name == text)
         if not currency_exchangeable:
-            await message.reply(Texts.error_order_currency)
+            await message.reply(Texts.error_currency)
             return
         order.currency_exchangeable = currency_exchangeable
         order.save()
@@ -65,11 +65,22 @@ async def hdl_order(message: types.Message):
         # Detect currency
         currency_received = Currency.get_or_none(Currency.name == text)
         if not currency_received or currency_received == order.currency_exchangeable:
-            await message.reply(Texts.error_order_currency)
+            await message.reply(Texts.error_currency)
             return
 
         order.currency_received = currency_received
         order.save()
+
+        # Not requisite
+        if not CustomerRequisite.get_or_none((CustomerRequisite.customer == customer) &
+                                             (CustomerRequisite.currency == order.currency_received)):
+            order.is_closed = True
+            order.save()
+
+            await Form.menu.set()
+            await message.reply(Texts.error_order_currency_received_requisite)
+            await message.answer(Texts.menu, reply_markup=kb_menu)
+            return
 
         text_reply = ''
         for num, rate in enumerate(Rate.select().where((Rate.currency_exchangeable == order.currency_exchangeable) &
@@ -84,9 +95,9 @@ async def hdl_order(message: types.Message):
 
         await message.reply(text_reply)
         await message.answer(Texts.order_currency_exchangeable_value.format(
-                currency_exchangeable=order.currency_exchangeable.name,
-                currency_received=order.currency_received.name
-            ), reply_markup=kb_back)
+            currency_exchangeable=order.currency_exchangeable.name,
+            currency_received=order.currency_received.name
+        ), reply_markup=kb_back)
 
     # Enter currency exchangeable value
     elif not order.currency_exchangeable_value:
@@ -139,24 +150,29 @@ async def hdl_order(message: types.Message):
         ), reply_markup=kb_back)
 
         kb = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=False)
-        for currency_method in CurrencyMethod.select().where(CurrencyMethod.active == True):
-            kb.add(KeyboardButton(currency_method.name))
+        for currency_requisite in CurrencyRequisite \
+                .select().where((CurrencyRequisite.active == True) &
+                                (CurrencyRequisite.currency == order.currency_exchangeable)):
+            kb.add(KeyboardButton(currency_requisite.name))
         kb.add(KeyboardButton(TextsKbs.back))
-        await message.answer(Texts.order_currency_method, reply_markup=kb)
+        await message.answer(Texts.order_currency_requisites, reply_markup=kb)
 
-    # Enter payment method
-    elif not order.currency_method:
-        currency_method = CurrencyMethod.get_or_none((CurrencyMethod.active == True) &
-                                                     (CurrencyMethod.name == text))
-        if not currency_method:
-            await message.reply(Texts.error_order_currency_method)
+    # Enter payment requisite
+    elif not order.currency_requisite:
+        currency_requisite = CurrencyRequisite.get_or_none((CurrencyRequisite.active == True) &
+                                                           (CurrencyRequisite.name == text))
+        if not currency_requisite:
+            await message.reply(Texts.error_order_currency_exchangeable_requisite)
             return
 
-        order.currency_method = currency_method
+        order.currency_requisite = currency_requisite
         order.save()
 
-        await message.reply(Texts.order_currency_description.format(order.currency_method.description),
-                            reply_markup=kb_back)
+        await message.reply(Texts.order_currency_requisite.format(
+            currency_exchangeable=order.currency_exchangeable.name,
+            currency_exchangeable_value=order.currency_exchangeable_value,
+            order_currency_requisite=order.currency_requisite.requisite),
+            reply_markup=kb_back)
 
     # Enter doc
     elif not order.doc:

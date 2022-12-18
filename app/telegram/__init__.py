@@ -19,14 +19,15 @@ from aiogram import Bot, Dispatcher
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
 from aiogram.utils import executor
 
-from app.models import Order
+from app.models import Order, CustomerRequisite
 from app.telegram.form import Form
 from app.telegram.handlers.menu import menu
 from app.telegram.handlers.order import hdl_order
-from app.telegram.handlers.settings import settings, settings_fullname
+from app.telegram.handlers.settings import settings, settings_fullname, settings_requisites
 from app.telegram.handlers.start import start
 from app.telegram.keyboards import kb_registration_complete, kb_menu
 from config import TG_KEY
+
 
 bot = Bot(token=TG_KEY)
 storage = MemoryStorage()
@@ -36,6 +37,8 @@ HANDLERS = [
     {'handler': menu, 'state': Form.menu, 'content_types': ['text']},
     {'handler': settings, 'state': Form.settings, 'content_types': ['text']},
     {'handler': settings_fullname, 'state': Form.settings_fullname, 'content_types': ['text']},
+    {'handler': settings, 'state': Form.settings, 'content_types': ['text']},
+    {'handler': settings_requisites, 'state': Form.settings_requisites, 'content_types': ['text']},
     {'handler': hdl_order, 'state': Form.order, 'content_types': ['text', 'photo', 'document']},
 ]
 
@@ -52,7 +55,17 @@ def orders_close():
         order.save()
 
 
+def customer_requisites_edited_stop():
+    for customer_requisite in CustomerRequisite.select().where(CustomerRequisite.is_edited == True):
+        if customer_requisite.requisite is None:
+            customer_requisite.delete_instance()
+        else:
+            customer_requisite.is_edited = False
+            customer_requisite.save()
+
+
 def start_bot():
     orders_close()
+    customer_requisites_edited_stop()
     handlers_create()
     executor.start_polling(dp)
