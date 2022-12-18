@@ -24,7 +24,7 @@ from app.telegram.keyboards import kb_menu, kb_settings, kb_back, kb_settings_re
 from config import TextsKbs, Texts
 
 
-async def settings(message: types.Message):
+async def handler_settings(message: types.Message):
     user_id = message.from_user.id
     text = message.text
     customer = Customer.get(Customer.user_id == user_id)
@@ -63,7 +63,7 @@ async def settings(message: types.Message):
         await message.reply(Texts.error)
 
 
-async def settings_fullname(message: types.Message):
+async def handler_settings_fullname(message: types.Message):
     user_id = message.from_user.id
     text = message.text
     customer = Customer.get(Customer.user_id == user_id)
@@ -91,7 +91,7 @@ async def settings_fullname(message: types.Message):
         await message.answer(Texts.menu_settings, reply_markup=kb_settings)
 
 
-async def settings_requisites(message: types.Message):
+async def handler_settings_requisites(message: types.Message):
     user_id = message.from_user.id
     text = message.text
     customer = Customer.get(Customer.user_id == user_id)

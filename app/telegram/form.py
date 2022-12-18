@@ -20,7 +20,8 @@ from aiogram.dispatcher.filters.state import StatesGroup, State
 
 class Form(StatesGroup):
     menu = State()
+    order = State()
+    orders = State()
     settings = State()
     settings_fullname = State()
     settings_requisites = State()
-    order = State()

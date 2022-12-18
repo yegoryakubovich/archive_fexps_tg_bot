@@ -25,7 +25,7 @@ from app.telegram.keyboards import kb_menu, kb_back
 from config import TextsKbs, Texts, TG_HELPER, DOCS_PATH
 
 
-async def hdl_order(message: types.Message):
+async def handler_order(message: types.Message):
     user_id = message.from_user.id
     text = message.text
     customer = Customer.get(Customer.user_id == user_id)

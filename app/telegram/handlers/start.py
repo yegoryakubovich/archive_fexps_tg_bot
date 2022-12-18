@@ -26,7 +26,7 @@ from app.telegram.keyboards import kb_registration_complete, kb_menu
 from config import Texts, TextsKbs
 
 
-async def start(message: types.Message):
+async def handler_start(message: types.Message):
     user_id = message.from_user.id
     text = message.text
     customer = Customer.get_or_none(Customer.user_id == user_id)

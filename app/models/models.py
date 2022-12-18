@@ -106,7 +106,7 @@ class Order(BaseModel):
     is_completed = BooleanField(default=False)
     datetime = DateTimeField()
     datetime_paid = DateTimeField(null=True, default=None)
-    datetime_complete = DateTimeField(null=True, default=None)
+    datetime_completed = DateTimeField(null=True, default=None)
     is_closed = BooleanField(default=False)
 
     class Meta:

@@ -21,10 +21,11 @@ from aiogram.utils import executor
 
 from app.models import Order, CustomerRequisite
 from app.telegram.form import Form
-from app.telegram.handlers.menu import menu
-from app.telegram.handlers.order import hdl_order
-from app.telegram.handlers.settings import settings, settings_fullname, settings_requisites
-from app.telegram.handlers.start import start
+from app.telegram.handlers.menu import handler_menu
+from app.telegram.handlers.order import handler_order
+from app.telegram.handlers.orders import handler_orders
+from app.telegram.handlers.settings import handler_settings, handler_settings_fullname, handler_settings_requisites
+from app.telegram.handlers.start import handler_start
 from app.telegram.keyboards import kb_registration_complete, kb_menu
 from config import TG_KEY
 
@@ -33,13 +34,13 @@ bot = Bot(token=TG_KEY)
 storage = MemoryStorage()
 dp = Dispatcher(bot, storage=storage)
 HANDLERS = [
-    {'handler': start, 'state': None, 'content_types': ['text']},
-    {'handler': menu, 'state': Form.menu, 'content_types': ['text']},
-    {'handler': settings, 'state': Form.settings, 'content_types': ['text']},
-    {'handler': settings_fullname, 'state': Form.settings_fullname, 'content_types': ['text']},
-    {'handler': settings, 'state': Form.settings, 'content_types': ['text']},
-    {'handler': settings_requisites, 'state': Form.settings_requisites, 'content_types': ['text']},
-    {'handler': hdl_order, 'state': Form.order, 'content_types': ['text', 'photo', 'document']},
+    {'handler': handler_start, 'state': None, 'content_types': ['text']},
+    {'handler': handler_menu, 'state': Form.menu, 'content_types': ['text']},
+    {'handler': handler_order, 'state': Form.order, 'content_types': ['text', 'photo', 'document']},
+    {'handler': handler_orders, 'state': Form.orders, 'content_types': ['text']},
+    {'handler': handler_settings, 'state': Form.settings, 'content_types': ['text']},
+    {'handler': handler_settings_fullname, 'state': Form.settings_fullname, 'content_types': ['text']},
+    {'handler': handler_settings_requisites, 'state': Form.settings_requisites, 'content_types': ['text']},
 ]
 
 

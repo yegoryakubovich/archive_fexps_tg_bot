@@ -22,11 +22,11 @@ from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
 
 from app.models import Customer, Order, Currency
 from app.telegram import Form
-from app.telegram.keyboards import kb_settings, kb_menu
-from config import Texts, TextsKbs, TG_HELPER
+from app.telegram.keyboards import kb_settings, kb_menu, kb_back
+from config import Texts, TextsKbs, TG_HELPER, ORDERS_COUNT
 
 
-async def menu(message: types.Message):
+async def handler_menu(message: types.Message):
     user_id = message.from_user.id
     text = message.text
     customer = Customer.get(Customer.user_id == user_id)
@@ -49,7 +49,28 @@ async def menu(message: types.Message):
         await message.reply(Texts.order_currency_exchangeable, reply_markup=kb)
 
     elif text == TextsKbs.menu_orders:
-        pass
+        orders = []
+        for order in Order.select().where(Order.customer == customer):
+            if order.doc is None:
+                continue
+            orders.append(order)
+
+        if len(orders) == 0:
+            return
+
+        orders.reverse()
+
+        text_reply = ''
+        for order in orders[:ORDERS_COUNT]:
+            order: Order
+            text_reply += Texts.menu_order.format(
+                datetime=order.datetime, order_id='%06d' % order.id,
+                currency_exchangeable_value=order.currency_exchangeable_value,
+                currency_exchangeable=order.currency_exchangeable.name,
+                currency_received_value=order.currency_received_value, currency_received=order.currency_received.name)
+        await Form.orders.set()
+        await message.reply(Texts.menu_orders.format(text_reply), reply_markup=kb_back)
+
     elif text == TextsKbs.menu_settings:
         await Form.settings.set()
         await message.reply(Texts.menu_settings.format(first_name=customer.first_name,
