@@ -23,7 +23,8 @@ from app.models import Customer, Order, Currency, Rate, CurrencyRequisite
 from app.models.models import Doc, CustomerRequisite
 from app.telegram import Form
 from app.telegram.keyboards import kb_menu, kb_back
-from config import TextsKbs, Texts, TG_HELPER, DOCS_PATH
+from app.telegram.notifications import notification_send
+from config import TextsKbs, Texts, TG_HELPER, DOCS_PATH, SITE_ORDER
 
 
 async def handler_order(message: types.Message):
@@ -48,6 +49,9 @@ async def handler_order(message: types.Message):
         if not currency_exchangeable:
             await message.reply(Texts.error_currency)
             return
+        if not Rate.get_or_none(Rate.currency_exchangeable == currency_exchangeable):
+            await message.reply(Texts.error_currency)
+            return
         order.currency_exchangeable = currency_exchangeable
         order.save()
 
@@ -56,8 +60,11 @@ async def handler_order(message: types.Message):
         for currency in Currency.select():
             if currency == currency_exchangeable:
                 continue
+            elif not Rate.get_or_none(Rate.currency_received == currency):
+                continue
             kb_btn = KeyboardButton(currency.name)
             kb.add(kb_btn)
+
         kb.add(TextsKbs.back)
         await message.reply(Texts.order_currency_received, reply_markup=kb)
 
@@ -66,6 +73,10 @@ async def handler_order(message: types.Message):
         # Detect currency
         currency_received = Currency.get_or_none(Currency.name == text)
         if not currency_received or currency_received == order.currency_exchangeable:
+            await message.reply(Texts.error_currency)
+            return
+        if not Rate.get_or_none((Rate.currency_exchangeable == order.currency_exchangeable) &
+                                (Rate.currency_received == currency_received)):
             await message.reply(Texts.error_currency)
             return
 
@@ -202,6 +213,9 @@ async def handler_order(message: types.Message):
 
         # Upload to server
         ftp_upload(doc)
+
+        # Admin notification
+        notification_send(text=Texts.admin_new_order.format(SITE_ORDER.format(order.id)))
 
         await Form.menu.set()
         await message.reply(Texts.order_doc)

@@ -20,7 +20,7 @@ from datetime import datetime
 from aiogram import types
 from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
 
-from app.models import Customer, Order, Currency
+from app.models import Customer, Order, Currency, Rate
 from app.telegram import Form
 from app.telegram.keyboards import kb_settings, kb_menu, kb_back
 from config import Texts, TextsKbs, TG_HELPER, ORDERS_COUNT
@@ -38,14 +38,22 @@ async def handler_menu(message: types.Message):
 
         order = Order(customer=customer, datetime=datetime.now())
         order.save()
-        await Form.order.set()
 
         # Create keyboard & send message
         kb = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=False)
         for currency in Currency.select():
+            if not Rate.get_or_none(Rate.currency_exchangeable == currency):
+                continue
             kb_btn = KeyboardButton(currency.name)
             kb.add(kb_btn)
+
+        # No currencies with rate
+        if not kb.keyboard:
+            await message.reply(Texts.error_order_currency)
+            return
+
         kb.add(TextsKbs.back)
+        await Form.order.set()
         await message.reply(Texts.order_currency_exchangeable, reply_markup=kb)
 
     elif text == TextsKbs.menu_orders:
