@@ -24,6 +24,11 @@ DB_USER = getenv('DB_USER')
 DB_PASSWORD = getenv('DB_PASSWORD')
 DB_NAME = getenv('DB_NAME')
 
+FTP_HOST = getenv('FTP_HOST')
+FTP_USER = getenv('FTP_USER')
+FTP_PASSWORD = getenv('FTP_PASSWORD')
+FTP_PATH = getenv('FTP_PATH')
+
 TG_KEY = getenv('TG_KEY')
 TG_HELPER = getenv('TG_HELPER')
 ORDERS_COUNT = int(getenv('ORDERS_COUNT'))
@@ -117,7 +122,8 @@ class Texts:
                                               'Пожалуйста, добавьте реквизиты в меню настроек.'
     error_order_doc = '❌ В качестве доказательств, пожалуйста, пришлите чек pdf или скриншот.!'
 
-    error_orders = '❌ Введите номер существующего заказа.'
+    error_orders = '❌ Список заказов пуст.'
+    error_order = '❌ Введите номер существующего заказа.'
 
 
 class TextsKbs:

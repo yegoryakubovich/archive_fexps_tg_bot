@@ -56,6 +56,7 @@ async def handler_menu(message: types.Message):
             orders.append(order)
 
         if len(orders) == 0:
+            await message.reply(Texts.error_orders)
             return
 
         orders.reverse()

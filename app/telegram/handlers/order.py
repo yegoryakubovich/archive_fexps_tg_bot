@@ -18,6 +18,7 @@
 from aiogram import types
 from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
 
+from app.ftp import ftp_upload
 from app.models import Customer, Order, Currency, Rate, CurrencyRequisite
 from app.models.models import Doc, CustomerRequisite
 from app.telegram import Form
@@ -198,6 +199,9 @@ async def handler_order(message: types.Message):
 
         order.doc = doc
         order.save()
+
+        # Upload to server
+        ftp_upload(doc)
 
         await Form.menu.set()
         await message.reply(Texts.order_doc)

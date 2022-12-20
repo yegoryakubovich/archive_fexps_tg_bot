@@ -111,3 +111,24 @@ class Order(BaseModel):
 
     class Meta:
         db_table = "orders"
+
+
+class Admin(BaseModel):
+    id = PrimaryKeyField()
+    login = CharField(max_length=32)
+    password = CharField(max_length=64)
+    permission_orders = BooleanField(default=False)
+    permission_payments = BooleanField(default=False)
+
+    class Meta:
+        db_table = "admins"
+
+
+class AdminDoc(BaseModel):
+    id = PrimaryKeyField()
+    admin = ForeignKeyField(Admin, to_field='id', on_delete='cascade')
+    order = ForeignKeyField(Order, to_field='id', on_delete='cascade')
+    extension = CharField(max_length=8)
+
+    class Meta:
+        db_table = "admins_docs"

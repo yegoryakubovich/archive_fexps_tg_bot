@@ -34,7 +34,7 @@ async def handler_orders(message: types.Message):
         await message.reply(Texts.menu, reply_markup=kb_menu)
         return
     elif not text.isdigit():
-        await message.reply(Texts.error_orders)
+        await message.reply(Texts.error_order)
         return
 
     order = None
@@ -49,7 +49,7 @@ async def handler_orders(message: types.Message):
     orders.reverse()
 
     if order not in orders[:ORDERS_COUNT]:
-        await message.reply(Texts.error_orders)
+        await message.reply(Texts.error_order)
         return
 
     await message.reply(Texts.menu_order_details.format(
@@ -57,7 +57,7 @@ async def handler_orders(message: types.Message):
         currency_exchangeable=order.currency_exchangeable.name, currency_received=order.currency_received.name,
         currency_exchangeable_value=order.currency_exchangeable_value,
         currency_received_value=order.currency_received_value, rate=order.rate,
-        doc=order.doc.id, is_paid=Texts.menu_order_statuses['is_paid'][order.is_paid if order.datetime_paid else 0],
+        doc=order.doc.id, is_paid=Texts.menu_order_statuses['is_paid'][order.is_paid if order.is_paid else 0],
         is_completed=Texts.menu_order_statuses['is_completed'][order.is_completed],
         datetime=order.datetime if order.datetime else Texts.menu_order_statuses['datetime'][False],
         datetime_paid=order.datetime_paid if order.datetime_paid else Texts.menu_order_statuses['datetime'][False],

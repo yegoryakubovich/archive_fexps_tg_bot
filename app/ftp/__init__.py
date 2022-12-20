@@ -15,8 +15,21 @@
 #
 
 
-from app import create_app
+from ftplib import FTP
+
+from app.models import Doc
+from config import FTP_HOST, FTP_USER, FTP_PASSWORD, DOCS_PATH, FTP_PATH
 
 
-if __name__ == '__main__':
-    create_app()
+ftp = FTP()
+
+
+def ftp_upload(doc: Doc):
+    ftp.connect(FTP_HOST)
+    ftp.login(user=FTP_USER, passwd=FTP_PASSWORD)
+
+    local_doc_path = '{}/{}.{}'.format(DOCS_PATH, doc.id, doc.extension)
+    ftp_doc_path = '{}/{}.{}'.format(FTP_PATH, doc.id, doc.extension)
+    with open(local_doc_path, 'rb') as file:
+        ftp.storbinary('STOR ' + ftp_doc_path, file, 1024)
+    ftp.quit()

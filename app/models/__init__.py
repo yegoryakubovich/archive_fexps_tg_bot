@@ -15,11 +15,11 @@
 #
 
 
-from app.models.models import Currency, CurrencyRequisite, Customer, CustomerRequisite, Rate, Doc, Order
-
+from app.models.models import Currency, CurrencyRequisite, Customer, CustomerRequisite, Rate, Doc, Order, Admin, \
+    AdminDoc
 
 models = [
-    Currency, CurrencyRequisite, Customer, CustomerRequisite, Rate, Doc, Order,
+    Currency, CurrencyRequisite, Customer, CustomerRequisite, Rate, Doc, Order, Admin, AdminDoc
 ]
 
 
