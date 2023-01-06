@@ -19,8 +19,7 @@ from aiogram import types
 from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
 
 from app.ftp import ftp_upload
-from app.models import Customer, Order, Currency, Rate, CurrencyRequisite
-from app.models.models import Doc, CustomerRequisite
+from app.models import Customer, Order, Rate, Doc, Direction, RequisiteReceived, RequisiteExchangeable
 from app.telegram import Form
 from app.telegram.keyboards import kb_menu, kb_back
 from app.telegram.notifications import notification_send
@@ -42,73 +41,42 @@ async def handler_order(message: types.Message):
         await Form.menu.set()
         await message.reply(Texts.menu, reply_markup=kb_menu)
 
-    # Enter currency exchangeable
-    elif not order.currency_exchangeable:
+    # Enter order direction
+    elif not order.direction:
         # Detect currency
-        currency_exchangeable = Currency.get_or_none(Currency.name == text)
-        if not currency_exchangeable:
-            await message.reply(Texts.error_currency)
-            return
-        if not Rate.get_or_none(Rate.currency_exchangeable == currency_exchangeable):
-            await message.reply(Texts.error_currency)
-            return
-        order.currency_exchangeable = currency_exchangeable
-        order.save()
-
-        # Create keyboard & send message
-        kb = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=False)
-        for currency in Currency.select():
-            if currency == currency_exchangeable:
+        direction = None
+        for d in Direction.select():
+            d_text = Texts.order_direction_item.format(
+                currency_exchangeable=d.currency_exchangeable.name,
+                currency_received=d.currency_received.name
+            )
+            if not text == d_text:
                 continue
-            elif not Rate.get_or_none(Rate.currency_received == currency):
-                continue
-            kb_btn = KeyboardButton(currency.name)
-            kb.add(kb_btn)
+            direction = d
 
-        kb.add(TextsKbs.back)
-        await message.reply(Texts.order_currency_received, reply_markup=kb)
-
-    # Enter currency received
-    elif not order.currency_received:
-        # Detect currency
-        currency_received = Currency.get_or_none(Currency.name == text)
-        if not currency_received or currency_received == order.currency_exchangeable:
-            await message.reply(Texts.error_currency)
+        if not direction:
+            await message.reply(Texts.error_direction)
             return
-        if not Rate.get_or_none((Rate.currency_exchangeable == order.currency_exchangeable) &
-                                (Rate.currency_received == currency_received)):
-            await message.reply(Texts.error_currency)
+        if not Rate.get_or_none(Rate.direction == direction):
+            await message.reply(Texts.error_direction)
             return
-
-        order.currency_received = currency_received
+        order.direction = direction
         order.save()
-
-        # Not requisite
-        if not CustomerRequisite.get_or_none((CustomerRequisite.customer == customer) &
-                                             (CustomerRequisite.currency == order.currency_received)):
-            order.is_closed = True
-            order.save()
-
-            await Form.menu.set()
-            await message.reply(Texts.error_order_currency_received_requisite)
-            await message.answer(Texts.menu, reply_markup=kb_menu)
-            return
 
         text_reply = ''
-        for num, rate in enumerate(Rate.select().where((Rate.currency_exchangeable == order.currency_exchangeable) &
-                                                       (Rate.currency_received == order.currency_received)), 1):
+        for num, rate in enumerate(Rate.select().where(Rate.direction == order.direction), 1):
             text_reply += Texts.order_rate.format(
-                num=num, currency_exchangeable_from=rate.currency_exchangeable_from,
-                currency_exchangeable_to=rate.currency_exchangeable_to,
-                currency_exchangeable=order.currency_exchangeable.name,
-                currency_received_rate=rate.rate,
-                currency_received=order.currency_received.name
+                num=num, currency_exchangeable_from=int(rate.currency_exchangeable_from),
+                currency_exchangeable_to=int(rate.currency_exchangeable_to),
+                currency_exchangeable=order.direction.currency_exchangeable.name,
+                currency_received_rate=round(rate.rate*10000, 1),
+                currency_received=order.direction.currency_received.name
             )
 
         await message.reply(text_reply)
         await message.answer(Texts.order_currency_exchangeable_value.format(
-            currency_exchangeable=order.currency_exchangeable.name,
-            currency_received=order.currency_received.name
+            currency_exchangeable=order.direction.currency_exchangeable.name,
+            currency_received=order.direction.currency_received.name
         ), reply_markup=kb_back)
 
     # Enter currency exchangeable value
@@ -118,8 +86,7 @@ async def handler_order(message: types.Message):
             return
 
         value = int(text)
-        rate = Rate.get_or_none((Rate.currency_exchangeable == order.currency_exchangeable) &
-                                (Rate.currency_received == order.currency_received) &
+        rate = Rate.get_or_none((Rate.direction == order.direction) &
                                 (Rate.currency_exchangeable_from <= value) &
                                 (Rate.currency_exchangeable_to >= value))
 
@@ -155,35 +122,71 @@ async def handler_order(message: types.Message):
         order.save()
 
         await message.reply(Texts.order_currency_received_value.format(
-            currency_exchangeable=order.currency_exchangeable.name,
+            currency_exchangeable=order.direction.currency_exchangeable.name,
             currency_exchangeable_value=order.currency_exchangeable_value,
-            currency_received=order.currency_received.name,
+            currency_received=order.direction.currency_received.name,
             currency_received_value=order.currency_received_value,
-        ), reply_markup=kb_back)
+        ))
 
         kb = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=False)
-        for currency_requisite in CurrencyRequisite \
-                .select().where((CurrencyRequisite.active == True) &
-                                (CurrencyRequisite.currency == order.currency_exchangeable)):
-            kb.add(KeyboardButton(currency_requisite.name))
-        kb.add(KeyboardButton(TextsKbs.back))
-        await message.answer(Texts.order_currency_requisites, reply_markup=kb)
+        for requisite_received in RequisiteReceived.select():
+            kb_btn = KeyboardButton(requisite_received.name)
+            kb.add(kb_btn)
+        kb.add(TextsKbs.back)
 
-    # Enter payment requisite
-    elif not order.currency_requisite:
-        currency_requisite = CurrencyRequisite.get_or_none((CurrencyRequisite.active == True) &
-                                                           (CurrencyRequisite.name == text))
-        if not currency_requisite:
-            await message.reply(Texts.error_order_currency_exchangeable_requisite)
+        await message.answer(Texts.order_requisite_received, reply_markup=kb)
+
+    # Enter exchangeable requisite
+    elif not order.requisite_received:
+        requisite_received = RequisiteReceived.get_or_none(RequisiteReceived.name == text)
+
+        if not requisite_received:
+            await message.reply(Texts.error_order_requisite)
             return
 
-        order.currency_requisite = currency_requisite
+        order.requisite_received = requisite_received
         order.save()
 
-        await message.reply(Texts.order_currency_requisite.format(
-            currency_exchangeable=order.currency_exchangeable.name,
+        kb = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=False)
+        for requisite_exchangeable in RequisiteExchangeable.select():
+            kb_btn = KeyboardButton(requisite_exchangeable.name)
+            kb.add(kb_btn)
+        kb.add(TextsKbs.back)
+
+        await message.answer(Texts.order_requisite_exchangeable, reply_markup=kb)
+
+    # Enter exchangeable requisite
+    elif not order.requisite_exchangeable:
+        requisite_exchangeable = RequisiteExchangeable.get_or_none(RequisiteExchangeable.name == text)
+
+        if not requisite_exchangeable:
+            await message.reply(Texts.error_order_requisite)
+            return
+        requisite_exchangeable: RequisiteExchangeable
+
+        order.requisite_exchangeable = requisite_exchangeable
+        if requisite_exchangeable.description == 'null':
+            order.requisite_exchangeable_value = 'Not required'
+        order.save()
+
+        if not order.requisite_exchangeable_value:
+            await message.reply(order.requisite_exchangeable.description, reply_markup=kb_back)
+            return
+
+        await message.reply(Texts.order_currency_exchangeable_requisite_payment.format(
+            currency_exchangeable=order.direction.currency_exchangeable.name,
             currency_exchangeable_value=order.currency_exchangeable_value,
-            order_currency_requisite=order.currency_requisite.requisite),
+            requisite_received=order.requisite_received.requisite),
+            reply_markup=kb_back)
+
+    # Enter requisite description
+    elif not order.requisite_exchangeable_value:
+        order.requisite_exchangeable_value = text
+        order.save()
+        await message.reply(Texts.order_currency_exchangeable_requisite_payment.format(
+            currency_exchangeable=order.direction.currency_exchangeable.name,
+            currency_exchangeable_value=order.currency_exchangeable_value,
+            requisite_received=order.requisite_received.requisite),
             reply_markup=kb_back)
 
     # Enter doc

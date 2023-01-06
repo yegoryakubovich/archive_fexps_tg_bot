@@ -49,6 +49,7 @@ class RequisiteExchangeable(BaseModel):
     id = PrimaryKeyField()
     direction = ForeignKeyField(Direction, to_field='id', on_delete='cascade')
     name = CharField(max_length=64)
+    description = CharField(max_length=1024)
 
     class Meta:
         db_table = "requisites_exchangeable"
@@ -56,7 +57,7 @@ class RequisiteExchangeable(BaseModel):
 
 class RequisiteReceived(BaseModel):
     id = PrimaryKeyField()
-    direction = ForeignKeyField(Direction, to_field='id', on_delete='cascade')
+    currency = ForeignKeyField(Currency, to_field='id', on_delete='cascade', null=True, default=None)
     name = CharField(max_length=64)
     requisite = CharField(max_length=1024)
 
@@ -80,8 +81,7 @@ class Customer(BaseModel):
 
 class Rate(BaseModel):
     id = PrimaryKeyField()
-    currency_exchangeable = ForeignKeyField(Currency, to_field='id', on_delete='cascade')
-    currency_received = ForeignKeyField(Currency, to_field='id', on_delete='cascade')
+    direction = ForeignKeyField(Direction, to_field='id', on_delete='cascade', null=True, default=None)
     currency_exchangeable_from = FloatField()
     currency_exchangeable_to = FloatField()
     rate = FloatField()
@@ -103,13 +103,14 @@ class Order(BaseModel):
     id = PrimaryKeyField()
     customer = ForeignKeyField(Customer, to_field='id', on_delete='cascade')
     direction = ForeignKeyField(Direction, to_field='id', on_delete='cascade', null=True, default=None)
-    currency_exchangeable_value = FloatField(null=True)
-    currency_received_value = FloatField(null=True)
+    currency_exchangeable_value = FloatField(null=True, default=None)
+    currency_received_value = FloatField(null=True, default=None)
     rate = FloatField(default=0)
-    currency_exchangeable_requisite = ForeignKeyField(RequisiteExchangeable, to_field='id', on_delete='cascade',
-                                                      null=True, default=None)
-    currency_received_requisite = ForeignKeyField(RequisiteReceived, to_field='id', on_delete='cascade',
-                                                  null=True, default=None)
+    requisite_exchangeable = ForeignKeyField(RequisiteExchangeable, to_field='id', on_delete='cascade',
+                                             null=True, default=None)
+    requisite_exchangeable_value = CharField(max_length=1024, null=True, default=None)
+    requisite_received = ForeignKeyField(RequisiteReceived, to_field='id', on_delete='cascade',
+                                         null=True, default=None)
     doc = ForeignKeyField(Doc, to_field='id', on_delete='cascade', null=True, default=None)
     is_paid = BooleanField(default=False)
     is_completed = BooleanField(default=False)

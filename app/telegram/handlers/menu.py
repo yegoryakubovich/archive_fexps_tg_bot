@@ -20,7 +20,7 @@ from datetime import datetime
 from aiogram import types
 from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
 
-from app.models import Customer, Order, Currency, Rate
+from app.models import Customer, Order, Direction
 from app.telegram import Form
 from app.telegram.keyboards import kb_settings, kb_menu, kb_back
 from config import Texts, TextsKbs, TG_HELPER, ORDERS_COUNT
@@ -41,20 +41,21 @@ async def handler_menu(message: types.Message):
 
         # Create keyboard & send message
         kb = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=False)
-        for currency in Currency.select():
-            if not Rate.get_or_none(Rate.currency_exchangeable == currency):
-                continue
-            kb_btn = KeyboardButton(currency.name)
+        for direction in Direction.select():
+            kb_btn = KeyboardButton(Texts.order_direction_item.format(
+                currency_exchangeable=direction.currency_exchangeable.name,
+                currency_received=direction.currency_received.name
+            ))
             kb.add(kb_btn)
 
         # No currencies with rate
         if not kb.keyboard:
-            await message.reply(Texts.error_order_currency)
+            await message.reply(Texts.error_order_direction)
             return
 
         kb.add(TextsKbs.back)
         await Form.order.set()
-        await message.reply(Texts.order_currency_exchangeable, reply_markup=kb)
+        await message.reply(Texts.order_direction, reply_markup=kb)
 
     elif text == TextsKbs.menu_orders:
         orders = []
@@ -82,8 +83,7 @@ async def handler_menu(message: types.Message):
 
     elif text == TextsKbs.menu_settings:
         await Form.settings.set()
-        await message.reply(Texts.menu_settings.format(first_name=customer.first_name,
-                                                       second_name=customer.second_name), reply_markup=kb_settings)
+        await message.reply(Texts.menu_settings, reply_markup=kb_settings)
     elif text == TextsKbs.menu_help:
         await message.reply(Texts.menu_help.format(TG_HELPER))
     else:
