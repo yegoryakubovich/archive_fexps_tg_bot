@@ -18,7 +18,7 @@
 from datetime import datetime
 
 from aiogram import types
-from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
+from aiogram.types import ReplyKeyboardMarkup, KeyboardButton, ReplyKeyboardRemove
 
 from app.models import Customer
 from app.telegram.form import Form
@@ -42,49 +42,56 @@ async def handler_start(message: types.Message):
 
         # Create keyboard & send message
         kb = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
-        tg_first_name = message.from_user.first_name
-        if tg_first_name:
-            kb_btn = KeyboardButton(tg_first_name)
+        tg_name = message.from_user.first_name
+        if tg_name:
+            kb_btn = KeyboardButton(tg_name)
             kb.add(kb_btn)
-        await message.answer(Texts.first_name, reply_markup=kb)
+        await message.answer(Texts.name, reply_markup=kb)
 
-    # Enter first name
-    elif not customer.first_name:
-        customer.first_name = text
+    # Enter  name
+    elif not customer.name:
+        customer.name = text
         customer.save()
+        await message.reply(Texts.referral, reply_markup=ReplyKeyboardRemove())
 
-        # Create keyboard & send message
-        kb = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
-        tg_second_name = message.from_user.last_name
-        if tg_second_name:
-            kb_btn = KeyboardButton(tg_second_name)
-            kb.add(kb_btn)
-        await message.reply(Texts.second_name.format(customer.first_name), reply_markup=kb)
-
-    # Enter second name
-    elif not customer.second_name:
-        customer.second_name = text
+    # Enter referral
+    elif not customer.referral:
+        customer.referral = text
         customer.save()
+        await message.reply(Texts.contact)
 
-        await message.reply(Texts.registration_complete.format(customer.first_name,
-                                                               customer.second_name),
+    # Enter contact
+    elif not customer.contact:
+        customer.contact = text
+        customer.save()
+        await message.reply(Texts.city)
+
+    # Enter city
+    elif not customer.city:
+        customer.city = text
+        customer.save()
+        await message.reply(Texts.registration_complete.format(customer.name,
+                                                               customer.contact,
+                                                               customer.city,),
                             reply_markup=kb_registration_complete)
 
     # Error registration, go to start
     elif text == TextsKbs.registration_complete_err:
         # Delete data
-        customer.first_name = None
-        customer.second_name = None
+        customer.name = None
+        customer.referral = None
+        customer.contact = None
+        customer.city = None
         customer.save()
 
         # Create keyboard & send message
         kb = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
-        tg_first_name = message.from_user.first_name
-        if tg_first_name:
-            kb_btn = KeyboardButton(tg_first_name)
+        tg_name = message.from_user.first_name
+        if tg_name:
+            kb_btn = KeyboardButton(tg_name)
             kb.add(kb_btn)
         await message.reply(Texts.registration_complete_err)
-        await message.answer(Texts.first_name, reply_markup=kb)
+        await message.answer(Texts.name, reply_markup=kb)
 
     # Success registration, go to menu
     elif text == TextsKbs.registration_complete_suc:

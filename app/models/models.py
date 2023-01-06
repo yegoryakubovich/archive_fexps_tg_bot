@@ -20,7 +20,6 @@ from peewee import MySQLDatabase, Model, PrimaryKeyField, CharField, BigIntegerF
 
 from config import DB_NAME, DB_USER, DB_PASSWORD, DB_HOST, DB_PORT
 
-
 db = MySQLDatabase(DB_NAME, user=DB_USER, password=DB_PASSWORD, host=DB_HOST, port=DB_PORT, charset='utf8mb4')
 
 
@@ -37,38 +36,46 @@ class Currency(BaseModel):
         db_table = "currencies"
 
 
-class CurrencyRequisite(BaseModel):
+class Direction(BaseModel):
     id = PrimaryKeyField()
-    currency = ForeignKeyField(Currency, to_field='id', on_delete='cascade')
-    name = CharField(max_length=64)
-    requisite = CharField(max_length=1024)
-    active = BooleanField(default=True)
+    currency_exchangeable = ForeignKeyField(Currency, to_field='id', on_delete='cascade', null=True, default=None)
+    currency_received = ForeignKeyField(Currency, to_field='id', on_delete='cascade', null=True, default=None)
 
     class Meta:
-        db_table = "currencies_requisites"
+        db_table = "directions"
+
+
+class RequisiteExchangeable(BaseModel):
+    id = PrimaryKeyField()
+    direction = ForeignKeyField(Direction, to_field='id', on_delete='cascade')
+    name = CharField(max_length=64)
+
+    class Meta:
+        db_table = "requisites_exchangeable"
+
+
+class RequisiteReceived(BaseModel):
+    id = PrimaryKeyField()
+    direction = ForeignKeyField(Direction, to_field='id', on_delete='cascade')
+    name = CharField(max_length=64)
+    requisite = CharField(max_length=1024)
+
+    class Meta:
+        db_table = "requisites_received"
 
 
 class Customer(BaseModel):
     id = PrimaryKeyField()
     user_id = BigIntegerField()
     username = CharField(max_length=64, null=True)
-    first_name = CharField(max_length=128, null=True, default=None)
-    second_name = CharField(max_length=128, null=True, default=None)
+    name = CharField(max_length=128, null=True, default=None)
+    referral = CharField(max_length=128, null=True, default=None)
+    contact = CharField(max_length=128, null=True, default=None)
+    city = CharField(max_length=128, null=True, default=None)
     datetime = DateTimeField()
 
     class Meta:
         db_table = "customers"
-
-
-class CustomerRequisite(BaseModel):
-    id = PrimaryKeyField()
-    customer = ForeignKeyField(Customer, to_field='id', on_delete='cascade')
-    currency = ForeignKeyField(Currency, to_field='id', on_delete='cascade')
-    requisite = CharField(max_length=1024, null=True, default=None)
-    is_edited = BooleanField(default=True)
-
-    class Meta:
-        db_table = "customers_requisites"
 
 
 class Rate(BaseModel):
@@ -95,12 +102,14 @@ class Doc(BaseModel):
 class Order(BaseModel):
     id = PrimaryKeyField()
     customer = ForeignKeyField(Customer, to_field='id', on_delete='cascade')
-    currency_exchangeable = ForeignKeyField(Currency, to_field='id', on_delete='cascade', null=True, default=None)
-    currency_received = ForeignKeyField(Currency, to_field='id', on_delete='cascade', null=True, default=None)
-    currency_exchangeable_value = FloatField(null=True, default=None)
-    currency_received_value = FloatField(null=True, default=None)
+    direction = ForeignKeyField(Direction, to_field='id', on_delete='cascade', null=True, default=None)
+    currency_exchangeable_value = FloatField(null=True)
+    currency_received_value = FloatField(null=True)
     rate = FloatField(default=0)
-    currency_requisite = ForeignKeyField(CurrencyRequisite, to_field='id', on_delete='cascade', null=True, default=None)
+    currency_exchangeable_requisite = ForeignKeyField(RequisiteExchangeable, to_field='id', on_delete='cascade',
+                                                      null=True, default=None)
+    currency_received_requisite = ForeignKeyField(RequisiteReceived, to_field='id', on_delete='cascade',
+                                                  null=True, default=None)
     doc = ForeignKeyField(Doc, to_field='id', on_delete='cascade', null=True, default=None)
     is_paid = BooleanField(default=False)
     is_completed = BooleanField(default=False)
