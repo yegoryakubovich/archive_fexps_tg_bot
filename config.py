@@ -40,9 +40,9 @@ DOCS_PATH = getenv('DOCS_PATH')
 class Texts:
     welcome = '🟡 Вас приветствует ФИНАНС EXPRESS Проверенный обмен денег №1 В АМЕРИКЕ\n\n' \
               'RUB USD UAH USDT (кэш, онлайн перевод)\n\n'
-    name = 'Для продолжения, пожалуйста, введите свое имя.'
-    referral = 'Пожалуйста, расскажите откуда вы о нас узнали?'
-    contact = 'Как с Вами можно связаться в случае внештатной ситуации? Это может быть telegram (username), ' \
+    name = 'Для продолжения, введите свое имя и фамилию.'
+    referral = 'Откуда вы о нас узнали?'
+    contact = 'Напишите контактный номер телефона или телеграм.' \
               'номер телефона или адрес электронной почты.'
     city = 'В каком городе вы находитесь?'
     registration_complete = 'Пожалуйста, проверьте свои данные:\n\n' \
@@ -55,12 +55,11 @@ class Texts:
     registration_complete_err = 'Вы начали регистрацию заново.'
 
     menu = 'Вы перенаправлены в главное меню.'
-    menu_transfer = '💸 Обменять (перевести) деньги'
     menu_orders = '📦 Показаны последние 10 заказов:\n\n{}\nДля детализации конкретного заказа, введите его ID.'
     menu_order = '[{datetime}] [ID {order_id}] {currency_exchangeable_value} {currency_exchangeable} => ' \
                  '{currency_received_value} {currency_received};\n'
     menu_order_details = '<code>======= [ID {order_id}] =======\n\n' \
-                         '1. Клиент: {customer_first_name}, {customer_second_name};\n' \
+                         '1. Клиент: {customer_name};\n' \
                          '2. Меняемая валюта: {currency_exchangeable};\n' \
                          '3. Меняемая сумма: {currency_exchangeable_value};\n' \
                          '4. Обмен в: {currency_received};\n' \
@@ -83,26 +82,22 @@ class Texts:
     menu_help = '🙋 Для обращения к службе поддержки, пожалуйста, напишите на аккаунт: @{}'
     menu_settings = '⚙ Вы перенаправлены в меню настроек.'
 
-    settings_fullname_first_name = 'Введите свое имя.'
-    settings_fullname_second_name = 'Введите свою фамилию.'
-    settings_fullname = 'Данные успешно изменены!'
-    settings_requisites = 'Выберите реквизит, который вы хотите добавить/изменить/удалить.'
-    settings_requisite_add = 'Введите реквизит для добавления. Это может быть номер карты, Zelle.\n\n' \
-                             'Если не знаете - что Вам нужно - обратитесь в поддержку.'
-    settings_requisite_update = 'Текущий реквизит:\n\n{customer_requisite}\n\n' \
-                                'Для обновления введите новый реквизит. Также Вы можете его удалить.'
-    settings_requisite_added = 'Реквизит успешно добавлен.'
-    settings_requisite_updated = 'Реквизит успешно обновлен.'
-    settings_requisite_deleted = 'Реквизит успешно удален.'
+    settings_name = 'Введите свое имя и фамилию.'
+    settings_name_success = 'Данные успешно изменены!'
 
-    order_direction_item = '{currency_exchangeable} ---> {currency_received}'
+    order_direction_item = '{currency_exchangeable_icon}{currency_exchangeable} ➡ ' \
+                           '{currency_received_icon}{currency_received}'
     order_direction = 'Выберите направление, по которому Вы бы хотели осуществить перевод.'
-    order_rates = 'Актуальный курс по переводу {currency_exchangeable} => {currency_received}:\n\n{}'
-    order_rate = '{num}. {currency_exchangeable_from} {currency_exchangeable} - {currency_exchangeable_to} ' \
-                 '{currency_exchangeable} - {currency_received_rate} {currency_exchangeable} за 1 {currency_received}' \
-                 ';\n '
-    order_currency_exchangeable_value = 'Введите сумму в {currency_exchangeable}, которую вы хотите обменять в {' \
-                                        'currency_received}. '
+    order_range_infinity = 'от {currency_exchangeable_from} {currency_exchangeable}'
+    order_range_column = 'Диапазон'
+    order_rate_column = 'за 1 {currency_received}'
+    order_range = '{currency_exchangeable_from}-{currency_exchangeable_to} {currency_exchangeable}'
+    order_rate = '{rate} {currency_exchangeable}'
+    order_rates = '<b>Актуальный КУРС {currency_exchangeable_icon}{currency_exchangeable}➡' \
+                  '{currency_received_icon}{currency_received}</b>\n\n' \
+                  '<code>{table_rates}</code>\n\n' \
+                  '✅ Введите сумму в {currency_exchangeable_icon}{currency_exchangeable}, ' \
+                  'которую вы хотите обменять в {currency_received_icon}{currency_received}.'
     order_currency_received_value = 'За {currency_exchangeable_value} {currency_exchangeable} вы получите {' \
                                     'currency_received_value} {currency_received} '
     order_requisite_exchangeable = 'Как вы хотите ПОЛУЧИТЬ деньги?'
@@ -139,7 +134,7 @@ class TextsKbs:
     registration_complete_suc = '✔ Данные верны'
     registration_complete_err = '❌ Начать ввод заново'
 
-    menu_order = '💸 Обменять (перевести) деньги'
+    menu_order = '💰 Обменять (перевести) ДЕНЬГИ'
     menu_orders = '📦 Мои заказы'
     menu_help = '🙋 Поддержка'
     menu_settings = '⚙ Настройки'

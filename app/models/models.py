@@ -31,9 +31,10 @@ class BaseModel(Model):
 class Currency(BaseModel):
     id = PrimaryKeyField()
     name = CharField(max_length=16)
+    icon = CharField(max_length=4)
 
     class Meta:
-        db_table = "currencies"
+        db_table = 'currencies'
 
 
 class Direction(BaseModel):
@@ -42,7 +43,7 @@ class Direction(BaseModel):
     currency_received = ForeignKeyField(Currency, to_field='id', on_delete='cascade', null=True, default=None)
 
     class Meta:
-        db_table = "directions"
+        db_table = 'directions'
 
 
 class RequisiteExchangeable(BaseModel):
@@ -52,7 +53,7 @@ class RequisiteExchangeable(BaseModel):
     description = CharField(max_length=1024)
 
     class Meta:
-        db_table = "requisites_exchangeable"
+        db_table = 'requisites_exchangeable'
 
 
 class RequisiteReceived(BaseModel):
@@ -62,7 +63,7 @@ class RequisiteReceived(BaseModel):
     requisite = CharField(max_length=1024)
 
     class Meta:
-        db_table = "requisites_received"
+        db_table = 'requisites_received'
 
 
 class Customer(BaseModel):
@@ -76,7 +77,7 @@ class Customer(BaseModel):
     datetime = DateTimeField()
 
     class Meta:
-        db_table = "customers"
+        db_table = 'customers'
 
 
 class Rate(BaseModel):
@@ -88,7 +89,7 @@ class Rate(BaseModel):
     only_admin = BooleanField(default=False)
 
     class Meta:
-        db_table = "rates"
+        db_table = 'rates'
 
 
 class Doc(BaseModel):
@@ -96,7 +97,7 @@ class Doc(BaseModel):
     extension = CharField(max_length=8)
 
     class Meta:
-        db_table = "docs"
+        db_table = 'docs'
 
 
 class Order(BaseModel):
@@ -120,7 +121,7 @@ class Order(BaseModel):
     is_closed = BooleanField(default=False)
 
     class Meta:
-        db_table = "orders"
+        db_table = 'orders'
 
 
 class Admin(BaseModel):
@@ -131,7 +132,7 @@ class Admin(BaseModel):
     permission_payments = BooleanField(default=False)
 
     class Meta:
-        db_table = "admins"
+        db_table = 'admins'
 
 
 class AdminDoc(BaseModel):
@@ -141,4 +142,4 @@ class AdminDoc(BaseModel):
     extension = CharField(max_length=8)
 
     class Meta:
-        db_table = "admins_docs"
+        db_table = 'admins_docs'

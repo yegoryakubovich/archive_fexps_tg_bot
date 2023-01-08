@@ -20,7 +20,7 @@ from datetime import datetime
 from aiogram import types
 from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
 
-from app.models import Customer, Order, Direction
+from app.models import Customer, Order, Direction, Rate
 from app.telegram import Form
 from app.telegram.keyboards import kb_settings, kb_menu, kb_back
 from config import Texts, TextsKbs, TG_HELPER, ORDERS_COUNT
@@ -42,9 +42,13 @@ async def handler_menu(message: types.Message):
         # Create keyboard & send message
         kb = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=False)
         for direction in Direction.select():
+            if not Rate.get_or_none(Rate.direction == direction):
+                continue
             kb_btn = KeyboardButton(Texts.order_direction_item.format(
                 currency_exchangeable=direction.currency_exchangeable.name,
-                currency_received=direction.currency_received.name
+                currency_exchangeable_icon=direction.currency_exchangeable.icon,
+                currency_received=direction.currency_received.name,
+                currency_received_icon=direction.currency_received.icon,
             ))
             kb.add(kb_btn)
 
@@ -76,8 +80,9 @@ async def handler_menu(message: types.Message):
             text_reply += Texts.menu_order.format(
                 datetime=order.datetime, order_id='%06d' % order.id,
                 currency_exchangeable_value=order.currency_exchangeable_value,
-                currency_exchangeable=order.currency_exchangeable.name,
-                currency_received_value=order.currency_received_value, currency_received=order.currency_received.name)
+                currency_exchangeable=order.direction.currency_exchangeable.name,
+                currency_received_value=order.currency_received_value,
+                currency_received=order.direction.currency_received.name)
         await Form.orders.set()
         await message.reply(Texts.menu_orders.format(text_reply), reply_markup=kb_back)
 

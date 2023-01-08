@@ -16,7 +16,8 @@
 
 
 from aiogram import types
-from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
+from aiogram.types import ReplyKeyboardMarkup, KeyboardButton, ParseMode
+from tabulate import tabulate
 
 from app.ftp import ftp_upload
 from app.models import Customer, Order, Rate, Doc, Direction, RequisiteReceived, RequisiteExchangeable
@@ -43,41 +44,72 @@ async def handler_order(message: types.Message):
 
     # Enter order direction
     elif not order.direction:
-        # Detect currency
+
+        # Detect direction
         direction = None
         for d in Direction.select():
             d_text = Texts.order_direction_item.format(
                 currency_exchangeable=d.currency_exchangeable.name,
-                currency_received=d.currency_received.name
+                currency_exchangeable_icon=d.currency_exchangeable.icon,
+                currency_received=d.currency_received.name,
+                currency_received_icon=d.currency_received.icon,
             )
             if not text == d_text:
                 continue
             direction = d
 
+        # Errors if not detected direction with rates
         if not direction:
             await message.reply(Texts.error_direction)
             return
         if not Rate.get_or_none(Rate.direction == direction):
             await message.reply(Texts.error_direction)
             return
+
+        # Save direction
         order.direction = direction
         order.save()
 
-        text_reply = ''
-        for num, rate in enumerate(Rate.select().where(Rate.direction == order.direction), 1):
-            text_reply += Texts.order_rate.format(
-                num=num, currency_exchangeable_from=int(rate.currency_exchangeable_from),
-                currency_exchangeable_to=int(rate.currency_exchangeable_to),
-                currency_exchangeable=order.direction.currency_exchangeable.name,
-                currency_received_rate=round(rate.rate*10000, 1),
-                currency_received=order.direction.currency_received.name
-            )
+        currency_exchangeable = order.direction.currency_exchangeable.name
+        currency_exchangeable_icon = order.direction.currency_exchangeable.icon
+        currency_received = order.direction.currency_received.name
+        currency_received_icon = order.direction.currency_received.icon
 
-        await message.reply(text_reply)
-        await message.answer(Texts.order_currency_exchangeable_value.format(
-            currency_exchangeable=order.direction.currency_exchangeable.name,
-            currency_received=order.direction.currency_received.name
-        ), reply_markup=kb_back)
+        rates = []
+        for rate in Rate.select().where(Rate.direction == order.direction):
+            currency_exchangeable_from = int(rate.currency_exchangeable_from)
+            currency_exchangeable_to = int(rate.currency_exchangeable_to)
+
+            range_text = Texts.order_range_infinity.format(
+                currency_exchangeable_from=currency_exchangeable_from,
+                currency_exchangeable=currency_exchangeable_to,
+            ) if rate.currency_exchangeable_to == 0 else Texts.order_range.format(
+                currency_exchangeable_from=currency_exchangeable_from,
+                currency_exchangeable_to=currency_exchangeable_to,
+                currency_exchangeable=currency_exchangeable,
+            )
+            rate_text = Texts.order_rate.format(
+                rate=round(rate.rate * 10000, 1),
+                currency_exchangeable=order.direction.currency_exchangeable.name,
+            )
+            rates.append([range_text, rate_text])
+
+        table_rates = tabulate(
+            tabular_data=rates,
+            headers=[Texts.order_range_column, Texts.order_rate_column.format(currency_received=currency_received)],
+            tablefmt='rst')
+
+        await message.reply(
+            Texts.order_rates.format(
+                currency_exchangeable=currency_exchangeable,
+                currency_exchangeable_icon=currency_exchangeable_icon,
+                currency_received=currency_received,
+                currency_received_icon=currency_received_icon,
+                table_rates=table_rates,
+            ),
+            reply_markup=kb_back,
+            parse_mode=ParseMode.HTML
+        )
 
     # Enter currency exchangeable value
     elif not order.currency_exchangeable_value:
@@ -90,9 +122,10 @@ async def handler_order(message: types.Message):
                                 (Rate.currency_exchangeable_from <= value) &
                                 (Rate.currency_exchangeable_to >= value))
 
-        # Save changes
-        order.currency_exchangeable_value = value
-        order.save()
+        if not rate:
+            rate = Rate.get_or_none((Rate.direction == order.direction) &
+                                    (Rate.currency_exchangeable_from <= value) &
+                                    (Rate.currency_exchangeable_to == 0))
 
         # Errors
         if not rate:
@@ -106,7 +139,11 @@ async def handler_order(message: types.Message):
             await message.answer(Texts.menu, reply_markup=kb_menu)
             return
 
-        elif rate.only_admin:
+        # Save changes
+        order.currency_exchangeable_value = value
+        order.save()
+
+        if rate.only_admin:
             await message.reply(Texts.error_order_rate_only_admin.format(TG_HELPER))
 
             # Close order & back to menu
@@ -118,7 +155,7 @@ async def handler_order(message: types.Message):
             return
 
         order.rate = rate.rate
-        order.currency_received_value = order.currency_exchangeable_value * order.rate
+        order.currency_received_value = round(order.currency_exchangeable_value / order.rate / 10000, 1)
         order.save()
 
         await message.reply(Texts.order_currency_received_value.format(

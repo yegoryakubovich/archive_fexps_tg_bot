@@ -20,7 +20,7 @@ from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
 
 from app.models import Customer, Currency
 from app.telegram import Form
-from app.telegram.keyboards import kb_menu, kb_settings, kb_back, kb_settings_requisite
+from app.telegram.keyboards import kb_menu, kb_settings
 from config import TextsKbs, Texts
 
 
@@ -87,5 +87,5 @@ async def handler_settings_fullname(message: types.Message):
         customer.save()
 
         await Form.settings.set()
-        await message.reply(Texts.settings_fullname)
+        await message.reply(Texts.settings_name_success)
         await message.answer(Texts.menu_settings, reply_markup=kb_settings)

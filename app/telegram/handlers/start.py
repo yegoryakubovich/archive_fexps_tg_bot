@@ -54,6 +54,15 @@ async def handler_start(message: types.Message):
         customer.save()
         await message.reply(Texts.referral, reply_markup=ReplyKeyboardRemove())
 
+    # Enter city
+    elif not customer.city:
+        customer.city = text
+        customer.save()
+        await message.reply(Texts.registration_complete.format(customer.name,
+                                                               customer.contact,
+                                                               customer.city, ),
+                            reply_markup=kb_registration_complete)
+
     # Enter referral
     elif not customer.referral:
         customer.referral = text
@@ -65,15 +74,6 @@ async def handler_start(message: types.Message):
         customer.contact = text
         customer.save()
         await message.reply(Texts.city)
-
-    # Enter city
-    elif not customer.city:
-        customer.city = text
-        customer.save()
-        await message.reply(Texts.registration_complete.format(customer.name,
-                                                               customer.contact,
-                                                               customer.city,),
-                            reply_markup=kb_registration_complete)
 
     # Error registration, go to start
     elif text == TextsKbs.registration_complete_err:

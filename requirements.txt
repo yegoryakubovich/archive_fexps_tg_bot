@@ -19,3 +19,4 @@ aiogram
 pytelegrambotapi
 peewee
 pymysql
+tabulate

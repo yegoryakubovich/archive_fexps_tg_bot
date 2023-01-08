@@ -53,13 +53,13 @@ async def handler_orders(message: types.Message):
         return
 
     await message.reply(Texts.menu_order_details.format(
-        order_id='%06d' % order.id, customer_second_name=customer.second_name, customer_first_name=customer.first_name,
-        currency_exchangeable=order.currency_exchangeable.name, currency_received=order.currency_received.name,
+        order_id='%06d' % order.id, customer_name=customer.name,
+        currency_exchangeable=order.direction.currency_exchangeable.name,
+        currency_received=order.direction.currency_received.name,
         currency_exchangeable_value=order.currency_exchangeable_value,
         currency_received_value=order.currency_received_value, rate=order.rate,
         doc=order.doc.id,
-        is_paid=Texts.menu_order_statuses['is_paid']
-        [order.is_paid if order.is_closed or order.is_paid else 'WAITING'],
+        is_paid=Texts.menu_order_statuses['is_paid'][order.is_paid if order.is_closed or order.is_paid else 'WAITING'],
         is_completed=Texts.menu_order_statuses['is_completed'][order.is_completed],
         datetime=order.datetime if order.datetime else Texts.menu_order_statuses['datetime'][False],
         datetime_paid=order.datetime_paid if order.datetime_paid else Texts.menu_order_statuses['datetime'][False],
