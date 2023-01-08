@@ -24,7 +24,7 @@ from app.telegram.form import Form
 from app.telegram.handlers.menu import handler_menu
 from app.telegram.handlers.order import handler_order
 from app.telegram.handlers.orders import handler_orders
-from app.telegram.handlers.settings import handler_settings, handler_settings_fullname
+from app.telegram.handlers.settings import handler_settings, handler_settings_name
 from app.telegram.handlers.start import handler_start
 from app.telegram.keyboards import kb_registration_complete, kb_menu
 from config import TG_KEY
@@ -39,7 +39,7 @@ HANDLERS = [
     {'handler': handler_order, 'state': Form.order, 'content_types': ['text', 'photo', 'document']},
     {'handler': handler_orders, 'state': Form.orders, 'content_types': ['text']},
     {'handler': handler_settings, 'state': Form.settings, 'content_types': ['text']},
-    {'handler': handler_settings_fullname, 'state': Form.settings_fullname, 'content_types': ['text']},
+    {'handler': handler_settings_name, 'state': Form.settings_name, 'content_types': ['text']},
 ]
 
 

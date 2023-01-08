@@ -41,17 +41,26 @@ async def handler_start(message: types.Message):
         await message.reply(Texts.welcome)
 
         # Create keyboard & send message
+        tg_first_name = message.from_user.first_name
+        tg_second_name = message.from_user.last_name
+
         kb = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
-        tg_name = message.from_user.first_name
-        if tg_name:
-            kb_btn = KeyboardButton(tg_name)
-            kb.add(kb_btn)
+        kb_btn = KeyboardButton('{tg_first_name} {tg_second_name}'.format(
+            tg_first_name=tg_first_name, tg_second_name=tg_second_name
+        ))
+        kb.add(kb_btn)
         await message.answer(Texts.name, reply_markup=kb)
 
     # Enter  name
     elif not customer.name:
         customer.name = text
         customer.save()
+
+        if customer.city:
+            await Form.menu.set()
+            await message.reply(Texts.menu, reply_markup=kb_menu)
+            return
+
         await message.reply(Texts.referral, reply_markup=ReplyKeyboardRemove())
 
     # Enter city

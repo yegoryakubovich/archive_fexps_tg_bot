@@ -23,5 +23,4 @@ class Form(StatesGroup):
     order = State()
     orders = State()
     settings = State()
-    settings_fullname = State()
-    settings_requisites = State()
+    settings_name = State()

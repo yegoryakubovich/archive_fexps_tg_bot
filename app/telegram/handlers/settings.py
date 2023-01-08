@@ -33,57 +33,37 @@ async def handler_settings(message: types.Message):
         await Form.menu.set()
         await message.reply(Texts.menu, reply_markup=kb_menu)
 
-    elif text == TextsKbs.settings_fullname:
+    elif text == TextsKbs.settings_name:
         # Delete data
-        customer.first_name = None
-        customer.second_name = None
+        customer.name = None
         customer.save()
 
-        await Form.settings_fullname.set()
+        await Form.settings_name.set()
 
         # Create keyboard & send message
-        kb = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
         tg_first_name = message.from_user.first_name
-        if tg_first_name:
-            kb_btn = KeyboardButton(tg_first_name)
-            kb.add(kb_btn)
-        await message.reply(Texts.settings_fullname_first_name, reply_markup=kb)
+        tg_second_name = message.from_user.last_name
 
-    elif text == TextsKbs.settings_requisites:
-        await Form.settings_requisites.set()
-
-        # Create keyboard & send message
         kb = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
-        for currency in Currency.select():
-            kb.add(KeyboardButton(currency.name))
-        kb.add(KeyboardButton(TextsKbs.back))
-        await message.reply(Texts.settings_requisites, reply_markup=kb)
+        kb_btn = KeyboardButton('{tg_first_name} {tg_second_name}'.format(
+            tg_first_name=tg_first_name, tg_second_name=tg_second_name
+        ))
+        kb.add(kb_btn)
+
+        await message.reply(Texts.settings_name, reply_markup=kb)
 
     else:
         await message.reply(Texts.error)
 
 
-async def handler_settings_fullname(message: types.Message):
+async def handler_settings_name(message: types.Message):
     user_id = message.from_user.id
     text = message.text
     customer = Customer.get(Customer.user_id == user_id)
 
     # Enter first name
-    if not customer.first_name:
-        customer.first_name = text
-        customer.save()
-
-        # Create keyboard & send message
-        kb = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
-        tg_second_name = message.from_user.last_name
-        if tg_second_name:
-            kb_btn = KeyboardButton(tg_second_name)
-            kb.add(kb_btn)
-        await message.reply(Texts.settings_fullname_second_name, reply_markup=kb)
-
-    # Enter second name
-    elif not customer.second_name:
-        customer.second_name = text
+    if not customer.name:
+        customer.name = text
         customer.save()
 
         await Form.settings.set()
