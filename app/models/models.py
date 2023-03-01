@@ -18,14 +18,48 @@
 from peewee import MySQLDatabase, Model, PrimaryKeyField, CharField, BigIntegerField, DateTimeField, ForeignKeyField, \
     FloatField, BooleanField
 
-from config import DB_NAME, DB_USER, DB_PASSWORD, DB_HOST, DB_PORT
+from config import MYSQL_NAME, MYSQL_USER, MYSQL_PASSWORD, MYSQL_HOST, MYSQL_PORT
 
-db = MySQLDatabase(DB_NAME, user=DB_USER, password=DB_PASSWORD, host=DB_HOST, port=DB_PORT, charset='utf8mb4')
+
+db = MySQLDatabase(MYSQL_NAME, user=MYSQL_USER, password=MYSQL_PASSWORD, host=MYSQL_HOST, port=MYSQL_PORT, charset='utf8mb4',
+                   autoconnect=False)
+
+
+def db_manager(function):
+    async def wrapper(message):
+        print(function.__name__)
+        print(db.is_closed())
+        if db.is_closed():
+            db.connect()
+        print(db.is_closed())
+        await function(message)
+        if not db.is_closed():
+            db.close()
+        print(db.is_closed())
+        print('----------------')
+
+    return wrapper
 
 
 class BaseModel(Model):
     class Meta:
         database = db
+
+
+class Admin(BaseModel):
+    id = PrimaryKeyField()
+    login = CharField(max_length=32)
+    password = CharField(max_length=64)
+    permission_orders = BooleanField(default=False)
+    permission_requisites = BooleanField(default=False)
+
+    class Meta:
+        db_table = 'admins'
+
+
+class MailingRate(BaseModel):
+    id = PrimaryKeyField()
+    datetime = DateTimeField()
 
 
 class Currency(BaseModel):
@@ -41,6 +75,7 @@ class Direction(BaseModel):
     id = PrimaryKeyField()
     currency_exchangeable = ForeignKeyField(Currency, to_field='id', on_delete='cascade', null=True, default=None)
     currency_received = ForeignKeyField(Currency, to_field='id', on_delete='cascade', null=True, default=None)
+    message_id = BigIntegerField(default=None, null=True)
 
     class Meta:
         db_table = 'directions'
@@ -59,6 +94,7 @@ class RequisiteExchangeable(BaseModel):
 class RequisiteReceived(BaseModel):
     id = PrimaryKeyField()
     currency = ForeignKeyField(Currency, to_field='id', on_delete='cascade', null=True, default=None)
+    admin = ForeignKeyField(Admin, to_field='id', on_delete='cascade')
     name = CharField(max_length=64)
     requisite = CharField(max_length=1024)
 
@@ -86,6 +122,7 @@ class Rate(BaseModel):
     currency_exchangeable_from = FloatField()
     currency_exchangeable_to = FloatField()
     rate = FloatField()
+    datetime_update = DateTimeField(null=True, default=None)
     only_admin = BooleanField(default=False)
 
     class Meta:
@@ -115,6 +152,8 @@ class Order(BaseModel):
     doc = ForeignKeyField(Doc, to_field='id', on_delete='cascade', null=True, default=None)
     is_paid = BooleanField(default=False)
     is_completed = BooleanField(default=False)
+    commission_rub = CharField(max_length=64, null=True, default=None)
+    received_usdt = CharField(max_length=64, null=True, default=None)
     datetime = DateTimeField()
     datetime_paid = DateTimeField(null=True, default=None)
     datetime_completed = DateTimeField(null=True, default=None)
@@ -122,17 +161,6 @@ class Order(BaseModel):
 
     class Meta:
         db_table = 'orders'
-
-
-class Admin(BaseModel):
-    id = PrimaryKeyField()
-    login = CharField(max_length=32)
-    password = CharField(max_length=64)
-    permission_orders = BooleanField(default=False)
-    permission_payments = BooleanField(default=False)
-
-    class Meta:
-        db_table = 'admins'
 
 
 class AdminDoc(BaseModel):

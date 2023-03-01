@@ -15,13 +15,17 @@
 #
 
 
-from app.models.models import Currency, Direction, RequisiteExchangeable, RequisiteReceived, Customer, Rate, Doc, Order
+from app.models.models import Currency, Direction, RequisiteExchangeable, RequisiteReceived, Customer, Rate, Doc, \
+    Order, db_manager, db, MailingRate
+
 
 models = [
-    Currency, Direction, RequisiteExchangeable, RequisiteReceived, Customer, Rate, Doc, Order,
+    Currency, Direction, RequisiteExchangeable, RequisiteReceived, Customer, Rate, Doc, Order, MailingRate
 ]
 
 
 def create_tables():
+    db.connect()
     for model in models:
         exec('{}.create_table()'.format(model.__name__))
+    db.close()

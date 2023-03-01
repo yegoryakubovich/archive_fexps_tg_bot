@@ -16,14 +16,16 @@
 
 
 from aiogram import types
-from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
+from aiogram.types import ReplyKeyboardRemove
 
-from app.models import Customer, Currency
+from app.models import Customer
+from app.models.models import db_manager
 from app.telegram import Form
 from app.telegram.keyboards import kb_menu, kb_settings
 from config import TextsKbs, Texts
 
 
+@db_manager
 async def handler_settings(message: types.Message):
     user_id = message.from_user.id
     text = message.text
@@ -33,39 +35,29 @@ async def handler_settings(message: types.Message):
         await Form.menu.set()
         await message.reply(Texts.menu, reply_markup=kb_menu)
 
-    elif text == TextsKbs.settings_name:
+    elif text == TextsKbs.setting_contact:
         # Delete data
-        customer.name = None
+        customer.contact = None
         customer.save()
 
         await Form.settings_name.set()
-
-        # Create keyboard & send message
-        tg_first_name = message.from_user.first_name
-        tg_second_name = message.from_user.last_name
-
-        kb = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
-        kb_btn = KeyboardButton('{tg_first_name} {tg_second_name}'.format(
-            tg_first_name=tg_first_name, tg_second_name=tg_second_name
-        ))
-        kb.add(kb_btn)
-
-        await message.reply(Texts.settings_name, reply_markup=kb)
+        await message.reply(Texts.setting_contact, reply_markup=ReplyKeyboardRemove())
 
     else:
         await message.reply(Texts.error)
 
 
+@db_manager
 async def handler_settings_name(message: types.Message):
     user_id = message.from_user.id
     text = message.text
     customer = Customer.get(Customer.user_id == user_id)
 
     # Enter first name
-    if not customer.name:
-        customer.name = text
+    if not customer.contact:
+        customer.contact = text
         customer.save()
 
         await Form.settings.set()
-        await message.reply(Texts.settings_name_success)
+        await message.reply(Texts.setting_contact_success)
         await message.answer(Texts.menu_settings, reply_markup=kb_settings)

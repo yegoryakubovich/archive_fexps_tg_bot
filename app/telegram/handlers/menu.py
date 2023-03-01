@@ -21,11 +21,13 @@ from aiogram import types
 from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
 
 from app.models import Customer, Order, Direction, Rate
+from app.models.models import db_manager
 from app.telegram import Form
 from app.telegram.keyboards import kb_settings, kb_menu, kb_back
 from config import Texts, TextsKbs, TG_HELPER, ORDERS_COUNT
 
 
+@db_manager
 async def handler_menu(message: types.Message):
     user_id = message.from_user.id
     text = message.text

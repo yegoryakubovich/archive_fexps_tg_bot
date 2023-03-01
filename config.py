@@ -15,26 +15,45 @@
 #
 
 
-from os import getenv
+from configparser import ConfigParser
 
-DB_HOST = getenv('DB_HOST')
-DB_PORT = int(getenv('DB_PORT'))
-DB_USER = getenv('DB_USER')
-DB_PASSWORD = getenv('DB_PASSWORD')
-DB_NAME = getenv('DB_NAME')
 
-FTP_HOST = getenv('FTP_HOST')
-FTP_USER = getenv('FTP_USER')
-FTP_PASSWORD = getenv('FTP_PASSWORD')
-FTP_PATH = getenv('FTP_PATH')
+config = ConfigParser()
+config.read('config.ini')
 
-TG_KEY = getenv('TG_KEY')
-TG_HELPER = getenv('TG_HELPER')
-TG_GROUP = getenv('TG_GROUP')
+config_mysql = config['mysql']
+config_redis = config['redis']
+config_ftp = config['ftp']
+config_telegram = config['telegram']
+config_paths = config['paths']
 
-SITE_ORDER = getenv('SITE_ORDER')
-ORDERS_COUNT = int(getenv('ORDERS_COUNT'))
-DOCS_PATH = getenv('DOCS_PATH')
+MYSQL_HOST = config_mysql.get('host')
+MYSQL_PORT = config_mysql.getint('port')
+MYSQL_USER = config_mysql.get('user')
+MYSQL_PASSWORD = config_mysql.get('password')
+MYSQL_NAME = config_mysql.get('name')
+
+REDIS_HOST = config_redis.get('host')
+REDIS_PORT = config_redis.getint('port')
+REDIS_PASSWORD = config_redis.get('password')
+REDIS_DB = config_redis.getint('db')
+REDIS_PREFIX = config_redis.get('prefix')
+
+FTP_HOST = config_ftp.get('host')
+FTP_USER = config_ftp.get('user')
+FTP_PASSWORD = config_ftp.get('password')
+FTP_PATH = config_ftp.get('path')
+
+TG_KEY = config_telegram.get('key')
+TG_GROUP_ADMINS = config_telegram.get('group_admins')
+TG_GROUP_INFO = config_telegram.get('group_info')
+TG_HELPER = config_telegram.get('helper')
+
+PATH_DOCS = config_paths.get('docs')
+PATH_RATES_UPDATER = config_paths.get('rates_updater')
+PATH_ORDER = config_paths.get('order')
+
+ORDERS_COUNT = 10
 
 
 class Texts:
@@ -82,8 +101,8 @@ class Texts:
     menu_help = '🙋 Для обращения к службе поддержки, пожалуйста, напишите на аккаунт: @{}'
     menu_settings = '⚙ Вы перенаправлены в меню настроек.'
 
-    settings_name = 'Введите свое имя и фамилию.'
-    settings_name_success = 'Данные успешно изменены!'
+    setting_contact = 'Введите свои актуальные контактные данные (телефон, почта).'
+    setting_contact_success = 'Данные успешно изменены!'
 
     order_direction_item = '{currency_exchangeable_icon}{currency_exchangeable} ➡ ' \
                            '{currency_received_icon}{currency_received}'
@@ -102,7 +121,7 @@ class Texts:
                                     'currency_received_value} {currency_received} '
     order_requisite_exchangeable = 'Как вы хотите ПОЛУЧИТЬ деньги?'
     order_requisite_received = 'Как вы хотите ОТПРАВИТЬ деньги?'
-    order_currency_exchangeable_requisite_payment = 'Пожалуйста, произведите оплату {currency_exchangeable_value} ' \
+    order_currency_exchangeable_requisite_payment = 'Произведите оплату {currency_exchangeable_value} ' \
                                                     '{currency_exchangeable} по следующим реквизитам:\n\n' \
                                                     '{requisite_received}\n\n' \
                                                     'После оплаты обязательно пришлите чек (pdf/скриншот).'
@@ -111,6 +130,15 @@ class Texts:
                 'в поддержку!'
 
     admin_new_order = 'Новый заказ! Обработайте его, перейдя по ссылке:\n\n{}'
+
+    group_info = 'Доброе утро АМЕРИКА☀\n' \
+                 'С Вами Финанс Express 🐆\n' \
+                 'Наступило {day} {month}!\n' \
+                 'Прекрасная возможность обменять деньги по ВЫГОДНОМУ курсу🤝.\n\n' \
+                 '<a href="https://t.me/perevody_usa">➡ СДЕЛАТЬ ОБМЕН</a>\n\n' \
+                 '<a href="https://t.me/Obmen_USA/20">🤔 ПОЧЕМУ МЫ?</a>\n' \
+                 '<a href="https://t.me/Obmen_USA/21">💰 КАК ПРОХОДИТ ОБМЕН</a>\n' \
+                 '<a href="https://t.me/Obmen_USA/22">💬 ОТЗЫВЫ</a>'
 
     error = '❌ Возникла ошибка, пожалуйста, повторите попытку.'
     error_direction = '❌ Возникла ошибка, пожалуйста, выберите верное направление перевода.'
@@ -134,11 +162,11 @@ class TextsKbs:
     registration_complete_suc = '✔ Данные верны'
     registration_complete_err = '❌ Начать ввод заново'
 
-    menu_order = '💰 Обменять (перевести) ДЕНЬГИ'
+    menu_order = '💵 Обменять (перевести) ДЕНЬГИ'
     menu_orders = '📦 Мои заказы'
     menu_help = '🙋 Поддержка'
     menu_settings = '⚙ Настройки'
 
-    settings_name = '📁 Изменить имя и фамилию'
+    setting_contact = '📱 Изменить контактные данные'
 
     back = '◀ Вернуться назад'

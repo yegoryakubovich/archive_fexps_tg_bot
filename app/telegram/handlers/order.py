@@ -21,17 +21,24 @@ from tabulate import tabulate
 
 from app.ftp import ftp_upload
 from app.models import Customer, Order, Rate, Doc, Direction, RequisiteReceived, RequisiteExchangeable
+from app.models.models import db_manager
 from app.telegram import Form
 from app.telegram.keyboards import kb_menu, kb_back
 from app.telegram.notifications import notification_send
-from config import TextsKbs, Texts, TG_HELPER, DOCS_PATH, SITE_ORDER
+from config import TextsKbs, Texts, TG_HELPER, PATH_DOCS, PATH_ORDER, PATH_RATES_UPDATER
 
 
+@db_manager
 async def handler_order(message: types.Message):
     user_id = message.from_user.id
     text = message.text
     customer = Customer.get(Customer.user_id == user_id)
-    order = Order.get((Order.customer == customer) & (Order.is_closed == False))
+    order = Order.get_or_none((Order.customer == customer) & (Order.is_closed == False))
+
+    if not order:
+        await Form.menu.set()
+        await message.reply(Texts.menu)
+        return
 
     # Go back
     if text == TextsKbs.back:
@@ -70,46 +77,9 @@ async def handler_order(message: types.Message):
         order.direction = direction
         order.save()
 
-        currency_exchangeable = order.direction.currency_exchangeable.name
-        currency_exchangeable_icon = order.direction.currency_exchangeable.icon
-        currency_received = order.direction.currency_received.name
-        currency_received_icon = order.direction.currency_received.icon
-
-        rates = []
-        for rate in Rate.select().where(Rate.direction == order.direction):
-            currency_exchangeable_from = int(rate.currency_exchangeable_from)
-            currency_exchangeable_to = int(rate.currency_exchangeable_to)
-
-            range_text = Texts.order_range_infinity.format(
-                currency_exchangeable_from=currency_exchangeable_from,
-                currency_exchangeable=currency_exchangeable_to,
-            ) if rate.currency_exchangeable_to == 0 else Texts.order_range.format(
-                currency_exchangeable_from=currency_exchangeable_from,
-                currency_exchangeable_to=currency_exchangeable_to,
-                currency_exchangeable=currency_exchangeable,
-            )
-            rate_text = Texts.order_rate.format(
-                rate=round(rate.rate * 10000, 1),
-                currency_exchangeable=order.direction.currency_exchangeable.name,
-            )
-            rates.append([range_text, rate_text])
-
-        table_rates = tabulate(
-            tabular_data=rates,
-            headers=[Texts.order_range_column, Texts.order_rate_column.format(currency_received=currency_received)],
-            tablefmt='rst')
-
-        await message.reply(
-            Texts.order_rates.format(
-                currency_exchangeable=currency_exchangeable,
-                currency_exchangeable_icon=currency_exchangeable_icon,
-                currency_received=currency_received,
-                currency_received_icon=currency_received_icon,
-                table_rates=table_rates,
-            ),
-            reply_markup=kb_back,
-            parse_mode=ParseMode.HTML
-        )
+        image = open('{}/images/{}.png'.format(PATH_RATES_UPDATER, 'rubusd'), 'rb')
+        await message.answer_photo(photo=image)
+        await message.reply(text='Введите сумму в USD, которую вы хотите ПОЛУЧИТЬ за RUB.')
 
     # Enter currency exchangeable value
     elif not order.currency_exchangeable_value:
@@ -140,7 +110,7 @@ async def handler_order(message: types.Message):
             return
 
         # Save changes
-        order.currency_exchangeable_value = value
+        order.currency_received_value = value
         order.save()
 
         if rate.only_admin:
@@ -155,7 +125,7 @@ async def handler_order(message: types.Message):
             return
 
         order.rate = rate.rate
-        order.currency_received_value = round(order.currency_exchangeable_value / order.rate / 10000, 1)
+        order.currency_exchangeable_value = round(order.currency_received_value*order.rate*10000, 1)
         order.save()
 
         await message.reply(Texts.order_currency_received_value.format(
@@ -166,16 +136,21 @@ async def handler_order(message: types.Message):
         ))
 
         kb = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=False)
-        for requisite_received in RequisiteReceived.select():
+        for requisite_received in RequisiteReceived.select().where(
+                RequisiteReceived.currency == order.direction.currency_exchangeable
+        ):
             kb_btn = KeyboardButton(requisite_received.name)
             kb.add(kb_btn)
         kb.add(TextsKbs.back)
 
         await message.answer(Texts.order_requisite_received, reply_markup=kb)
 
-    # Enter exchangeable requisite
+    # Enter received requisite
     elif not order.requisite_received:
-        requisite_received = RequisiteReceived.get_or_none(RequisiteReceived.name == text)
+        requisite_received = RequisiteReceived.get_or_none(
+            (RequisiteReceived.name == text)
+            & RequisiteReceived.currency == order.direction.currency_received
+        )
 
         if not requisite_received:
             await message.reply(Texts.error_order_requisite)
@@ -242,7 +217,7 @@ async def handler_order(message: types.Message):
         doc = Doc(extension=extension)
         doc.save()
 
-        destination_file = '{}/{}.{}'.format(DOCS_PATH, doc.id, doc.extension)
+        destination_file = '{}/{}.{}'.format(PATH_DOCS, doc.id, doc.extension)
         if photo:
             await photo[-1].download(destination_file=destination_file)
         elif doc:
@@ -255,7 +230,7 @@ async def handler_order(message: types.Message):
         ftp_upload(doc)
 
         # Admin notification
-        notification_send(text=Texts.admin_new_order.format(SITE_ORDER.format(order.id)))
+        notification_send(text=Texts.admin_new_order.format(PATH_ORDER.format(order.id)))
 
         await Form.menu.set()
         await message.reply(Texts.order_doc)

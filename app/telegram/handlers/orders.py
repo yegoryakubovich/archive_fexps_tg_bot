@@ -19,11 +19,13 @@ from aiogram import types
 from aiogram.types import ParseMode
 
 from app.models import Customer, Order
+from app.models.models import db_manager
 from app.telegram import Form
 from app.telegram.keyboards import kb_menu
 from config import Texts, TextsKbs, ORDERS_COUNT
 
 
+@db_manager
 async def handler_orders(message: types.Message):
     user_id = message.from_user.id
     text = message.text

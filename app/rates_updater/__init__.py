@@ -15,17 +15,11 @@
 #
 
 
-from os import mkdir
-from os.path import exists
+from threading import Thread
 
-from app.models import create_tables
-from app.rates_updater import rates_updater_create
-from app.telegram import start_bot
-from config import PATH_DOCS
+from app.rates_updater.rates_updater import rates_updater
 
 
-def create_app():
-    create_tables()
-    mkdir(PATH_DOCS) if not exists(PATH_DOCS) else None
-    rates_updater_create()
-    start_bot()
+def rates_updater_create():
+    thread = Thread(target=rates_updater, args=())
+    thread.start()

@@ -30,7 +30,7 @@ kb_menu.add(KeyboardButton(TextsKbs.menu_orders), KeyboardButton(TextsKbs.menu_s
 kb_menu.add(KeyboardButton(TextsKbs.menu_help))
 
 kb_settings = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=False)
-kb_settings.add(KeyboardButton(TextsKbs.settings_name))
+kb_settings.add(KeyboardButton(TextsKbs.setting_contact))
 kb_settings.add(KeyboardButton(TextsKbs.back))
 
 kb_back = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=False)

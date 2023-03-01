@@ -15,8 +15,10 @@
 #
 
 
-aiogram
-pytelegrambotapi
+aiogram==2.24
+pytelegrambotapi==4.9.0
 peewee
 pymysql
 tabulate
+pillow
+redis

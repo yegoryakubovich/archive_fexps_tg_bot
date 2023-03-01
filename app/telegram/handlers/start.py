@@ -21,11 +21,13 @@ from aiogram import types
 from aiogram.types import ReplyKeyboardMarkup, KeyboardButton, ReplyKeyboardRemove
 
 from app.models import Customer
+from app.models.models import db_manager
 from app.telegram.form import Form
 from app.telegram.keyboards import kb_registration_complete, kb_menu
 from config import Texts, TextsKbs
 
 
+@db_manager
 async def handler_start(message: types.Message):
     user_id = message.from_user.id
     text = message.text
@@ -61,16 +63,13 @@ async def handler_start(message: types.Message):
             await message.reply(Texts.menu, reply_markup=kb_menu)
             return
 
-        await message.reply(Texts.referral, reply_markup=ReplyKeyboardRemove())
+        await message.reply(Texts.city, reply_markup=ReplyKeyboardRemove())
 
     # Enter city
     elif not customer.city:
         customer.city = text
         customer.save()
-        await message.reply(Texts.registration_complete.format(customer.name,
-                                                               customer.contact,
-                                                               customer.city, ),
-                            reply_markup=kb_registration_complete)
+        await message.reply(Texts.referral)
 
     # Enter referral
     elif not customer.referral:
@@ -82,7 +81,10 @@ async def handler_start(message: types.Message):
     elif not customer.contact:
         customer.contact = text
         customer.save()
-        await message.reply(Texts.city)
+        await message.reply(Texts.registration_complete.format(customer.name,
+                                                               customer.contact,
+                                                               customer.city, ),
+                            reply_markup=kb_registration_complete)
 
     # Error registration, go to start
     elif text == TextsKbs.registration_complete_err:
