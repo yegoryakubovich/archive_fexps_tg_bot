@@ -1,5 +1,5 @@
 #
-# (c) 2022, Yegor Yakubovich
+# (c) 2023, Yegor Yakubovich
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -59,11 +59,21 @@ async def handler_menu(message: types.Message):
             await message.reply(Texts.error_order_direction)
             return
 
+        kb.add(TextsKbs.menu_help)
         kb.add(TextsKbs.back)
         await Form.order.set()
         await message.reply(Texts.order_direction, reply_markup=kb)
 
-    elif text == TextsKbs.menu_orders:
+    elif text == TextsKbs.menu_settings:
+        await Form.settings.set()
+        await message.reply(Texts.menu_settings, reply_markup=kb_settings)
+    elif text == TextsKbs.menu_help:
+        await message.reply(Texts.menu_help.format(TG_HELPER))
+    else:
+        await message.reply(Texts.error, reply_markup=kb_menu)
+
+
+'''elif text == TextsKbs.menu_orders:
         orders = []
         for order in Order.select().where(Order.customer == customer):
             if order.doc is None:
@@ -86,12 +96,4 @@ async def handler_menu(message: types.Message):
                 currency_received_value=order.currency_received_value,
                 currency_received=order.direction.currency_received.name)
         await Form.orders.set()
-        await message.reply(Texts.menu_orders.format(text_reply), reply_markup=kb_back)
-
-    elif text == TextsKbs.menu_settings:
-        await Form.settings.set()
-        await message.reply(Texts.menu_settings, reply_markup=kb_settings)
-    elif text == TextsKbs.menu_help:
-        await message.reply(Texts.menu_help.format(TG_HELPER))
-    else:
-        await message.reply(Texts.error, reply_markup=kb_menu)
+        await message.reply(Texts.menu_orders.format(text_reply), reply_markup=kb_back)'''

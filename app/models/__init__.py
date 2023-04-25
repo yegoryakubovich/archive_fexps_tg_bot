@@ -1,5 +1,5 @@
 #
-# (c) 2022, Yegor Yakubovich
+# (c) 2023, Yegor Yakubovich
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,11 +16,12 @@
 
 
 from app.models.models import Currency, Direction, RequisiteExchangeable, RequisiteReceived, Customer, Rate, Doc, \
-    Order, db_manager, db, MailingRate
+    Order, db_manager, db, MailingRate, Admin, AdminMethodOutput, AdminMethodInput
 
 
 models = [
-    Currency, Direction, RequisiteExchangeable, RequisiteReceived, Customer, Rate, Doc, Order, MailingRate
+    Currency, Direction, RequisiteExchangeable, RequisiteReceived, Customer, Admin, 
+    AdminMethodInput, AdminMethodOutput, Rate, Doc, Order, MailingRate
 ]
 
 

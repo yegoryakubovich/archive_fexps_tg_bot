@@ -1,5 +1,5 @@
 #
-# (c) 2022, Yegor Yakubovich
+# (c) 2023, Yegor Yakubovich
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -21,22 +21,24 @@ from peewee import MySQLDatabase, Model, PrimaryKeyField, CharField, BigIntegerF
 from config import MYSQL_NAME, MYSQL_USER, MYSQL_PASSWORD, MYSQL_HOST, MYSQL_PORT
 
 
-db = MySQLDatabase(MYSQL_NAME, user=MYSQL_USER, password=MYSQL_PASSWORD, host=MYSQL_HOST, port=MYSQL_PORT, charset='utf8mb4',
-                   autoconnect=False)
+db = MySQLDatabase(
+    database=MYSQL_NAME,
+    user=MYSQL_USER,
+    password=MYSQL_PASSWORD,
+    host=MYSQL_HOST,
+    port=MYSQL_PORT,
+    charset='utf8mb4',
+    autoconnect=False,
+)
 
 
 def db_manager(function):
     async def wrapper(message):
-        print(function.__name__)
-        print(db.is_closed())
         if db.is_closed():
             db.connect()
-        print(db.is_closed())
         await function(message)
         if not db.is_closed():
             db.close()
-        print(db.is_closed())
-        print('----------------')
 
     return wrapper
 
@@ -44,17 +46,6 @@ def db_manager(function):
 class BaseModel(Model):
     class Meta:
         database = db
-
-
-class Admin(BaseModel):
-    id = PrimaryKeyField()
-    login = CharField(max_length=32)
-    password = CharField(max_length=64)
-    permission_orders = BooleanField(default=False)
-    permission_requisites = BooleanField(default=False)
-
-    class Meta:
-        db_table = 'admins'
 
 
 class MailingRate(BaseModel):
@@ -94,7 +85,6 @@ class RequisiteExchangeable(BaseModel):
 class RequisiteReceived(BaseModel):
     id = PrimaryKeyField()
     currency = ForeignKeyField(Currency, to_field='id', on_delete='cascade', null=True, default=None)
-    admin = ForeignKeyField(Admin, to_field='id', on_delete='cascade')
     name = CharField(max_length=64)
     requisite = CharField(max_length=1024)
 
@@ -114,6 +104,39 @@ class Customer(BaseModel):
 
     class Meta:
         db_table = 'customers'
+
+
+class Admin(BaseModel):
+    id = PrimaryKeyField()
+    account_id = BigIntegerField()
+    customer = ForeignKeyField(Customer, to_field='id')
+    datetime = DateTimeField()
+
+    permission_orders = BooleanField(default=False)
+    permission_input = BooleanField(default=False)
+    permission_output = BooleanField(default=False)
+    permission_requisites = BooleanField(default=False)
+
+    class Meta:
+        db_table = 'admins'
+
+
+class AdminMethodInput(BaseModel):
+    id = PrimaryKeyField()
+    admin = ForeignKeyField(Admin, to_field='id', null=True, default=None)
+    method_input = ForeignKeyField(RequisiteExchangeable, to_field='id', null=True, default=None)
+
+    class Meta:
+        db_table = 'admins_methods_inputs'
+
+
+class AdminMethodOutput(BaseModel):
+    id = PrimaryKeyField()
+    admin = ForeignKeyField(Admin, to_field='id', on_delete='cascade', null=True, default=None)
+    method_output = ForeignKeyField(RequisiteReceived, to_field='id', on_delete='cascade', null=True, default=None)
+
+    class Meta:
+        db_table = 'admins_methods_outputs'
 
 
 class Rate(BaseModel):
@@ -152,8 +175,13 @@ class Order(BaseModel):
     doc = ForeignKeyField(Doc, to_field='id', on_delete='cascade', null=True, default=None)
     is_paid = BooleanField(default=False)
     is_completed = BooleanField(default=False)
-    commission_rub = CharField(max_length=64, null=True, default=None)
-    received_usdt = CharField(max_length=64, null=True, default=None)
+
+    input_admin = ForeignKeyField(Admin, to_field='id', null=True, default=None)
+    input_comment = CharField(max_length=256, null=True, default=None)
+    output_admin = ForeignKeyField(Admin, to_field='id', null=True, default=None)
+    output_comment = CharField(max_length=256, null=True, default=None)
+    output_doc = ForeignKeyField(Doc, to_field='id', null=True, default=None)
+
     datetime = DateTimeField()
     datetime_paid = DateTimeField(null=True, default=None)
     datetime_completed = DateTimeField(null=True, default=None)
@@ -161,13 +189,3 @@ class Order(BaseModel):
 
     class Meta:
         db_table = 'orders'
-
-
-class AdminDoc(BaseModel):
-    id = PrimaryKeyField()
-    admin = ForeignKeyField(Admin, to_field='id', on_delete='cascade')
-    order = ForeignKeyField(Order, to_field='id', on_delete='cascade')
-    extension = CharField(max_length=8)
-
-    class Meta:
-        db_table = 'admins_docs'

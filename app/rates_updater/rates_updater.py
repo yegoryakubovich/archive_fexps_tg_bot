@@ -1,5 +1,5 @@
 #
-# (c) 2022, Yegor Yakubovich
+# (c) 2023, Yegor Yakubovich
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -29,9 +29,9 @@ from app.rates_updater.rates_calculate import rates_calculate
 
 from telebot import TeleBot
 
-from config import TG_KEY, TG_GROUP_INFO, Texts, PATH_RATES_UPDATER
+from config import TG_GROUP_INFO_ID, TG_BOT_KEY, Texts, PATH_RATES_UPDATER
 
-bot = TeleBot(TG_KEY)
+bot = TeleBot(TG_BOT_KEY)
 MONTHS = {
     1: 'января',
     2: 'февраля',
@@ -75,6 +75,21 @@ def rates_updater():
                            f'{rates[2]:.2f} — 1500-5000 usd\n' \
                            f'{rates[1]:.2f} — 5000-10000 usd\n' \
                            f'{rates[0]:.2f} — от 10000 usd'
+                    rate_1 = Rate.get(Rate.id == 6)
+                    rate_2 = Rate.get(Rate.id == 7)
+                    rate_3 = Rate.get(Rate.id == 8)
+                    rate_4 = Rate.get(Rate.id == 9)
+                    rate_5 = Rate.get(Rate.id == 10)
+                    rate_1.rate = 1 / rates[4] / 10000
+                    rate_2.rate = 1 / rates[3] / 10000
+                    rate_3.rate = 1 / rates[2] / 10000
+                    rate_4.rate = 1 / rates[1] / 10000
+                    rate_5.rate = 1 / rates[0] / 10000
+                    rate_1.save()
+                    rate_2.save()
+                    rate_3.save()
+                    rate_4.save()
+                    rate_5.save()
                 elif direction.currency_exchangeable == currency_usd and direction.currency_received == currency_rub:
                     directions['rubusd'] = direction
                     binance_rate = binance_rate_get(currency=currency_rub, pay_types=['TinkoffNew'])
@@ -137,20 +152,20 @@ def rates_updater():
 
                 for name, direction in directions.items():
                     image = open('{}/images/{}.png'.format(PATH_RATES_UPDATER, name), 'rb')
-                    message = bot.send_photo(TG_GROUP_INFO, photo=image)
+                    message = bot.send_photo(TG_GROUP_INFO_ID, photo=image)
                     direction.message_id = message.message_id
                     direction.save()
 
-                bot.send_message(TG_GROUP_INFO, text=Texts.group_info.format(
+                bot.send_message(TG_GROUP_INFO_ID, text=Texts.group_info.format(
                     day=dt_now.day,
                     month=MONTHS[dt_now.month]
                 ), parse_mode='html')
             else:
                 for name, direction in directions.items():
                     image = open('{}/images/{}.png'.format(PATH_RATES_UPDATER, name), 'rb')
-                    bot.edit_message_media(chat_id=TG_GROUP_INFO, message_id=direction.message_id,
+                    bot.edit_message_media(chat_id=TG_GROUP_INFO_ID, message_id=direction.message_id,
                                            media=InputMedia(type='photo', media=image))
         except Exception as e:
-            print(e)
+            pass
         db.close()
         sleep(600)

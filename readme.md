@@ -8,7 +8,7 @@ The project is based on the aiogram and ORM peewee modules.
 
 ## 2. License
 
-(c) 2022, Yegor Yakubovich
+(c) 2023, Yegor Yakubovich
 
 Licensed under the Apache License, Version 2.0 (the "License");
 

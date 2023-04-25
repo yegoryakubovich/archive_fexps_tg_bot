@@ -1,5 +1,5 @@
 #
-# (c) 2022, Yegor Yakubovich
+# (c) 2023, Yegor Yakubovich
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ config_mysql = config['mysql']
 config_redis = config['redis']
 config_ftp = config['ftp']
 config_telegram = config['telegram']
+config_urls = config['urls']
 config_paths = config['paths']
 
 MYSQL_HOST = config_mysql.get('host')
@@ -44,10 +45,15 @@ FTP_USER = config_ftp.get('user')
 FTP_PASSWORD = config_ftp.get('password')
 FTP_PATH = config_ftp.get('path')
 
-TG_KEY = config_telegram.get('key')
-TG_GROUP_ADMINS = config_telegram.get('group_admins')
-TG_GROUP_INFO = config_telegram.get('group_info')
+TG_BOT_KEY = config_telegram.get('bot_key')
+TG_BOT_ADMIN_KEY = config_telegram.get('bot_admin_key')
+TG_GROUP_LOGS_ID = config_telegram.get('group_logs_id')
+TG_GROUP_INFO_ID = config_telegram.get('group_info_id')
+TG_GROUP_INPUT = config_telegram.get('group_input')
 TG_HELPER = config_telegram.get('helper')
+
+URL_ORDER = config_urls.get('order')
+URL_DOC = config_urls.get('doc')
 
 PATH_DOCS = config_paths.get('docs')
 PATH_RATES_UPDATER = config_paths.get('rates_updater')
@@ -129,7 +135,7 @@ class Texts:
                 'мы отправим Вам денежные средства на указанные реквизиты.\n\nЕсли возникнут вопросы - обращайтесь ' \
                 'в поддержку!'
 
-    admin_new_order = 'Новый заказ! Обработайте его, перейдя по ссылке:\n\n{}'
+    admin_new_order = '❗ Проверить оплату {}. Сумма: {} {}.'
 
     group_info = 'Доброе утро АМЕРИКА☀\n' \
                  'С Вами Финанс Express 🐆\n' \

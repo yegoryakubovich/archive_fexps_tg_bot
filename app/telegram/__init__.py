@@ -1,5 +1,5 @@
 #
-# (c) 2022, Yegor Yakubovich
+# (c) 2023, Yegor Yakubovich
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -18,20 +18,21 @@
 from aiogram import Bot, Dispatcher
 from aiogram.contrib.fsm_storage.redis import RedisStorage2
 from aiogram.utils import executor
+from telebot import types
 
 from app.models import Order
 from app.models.models import db
 from app.telegram.form import Form
 from app.telegram.handlers.menu import handler_menu
-from app.telegram.handlers.order import handler_order
+from app.telegram.handlers.order import handler_order, handler_order_confirming
 from app.telegram.handlers.orders import handler_orders
 from app.telegram.handlers.settings import handler_settings, handler_settings_name
 from app.telegram.handlers.start import handler_start
 from app.telegram.keyboards import kb_registration_complete, kb_menu
-from config import TG_KEY, REDIS_HOST, REDIS_PORT, REDIS_PASSWORD, REDIS_DB, REDIS_PREFIX
+from config import TG_BOT_KEY, REDIS_HOST, REDIS_PORT, REDIS_PASSWORD, REDIS_DB, REDIS_PREFIX
 
 
-bot = Bot(token=TG_KEY)
+bot = Bot(token=TG_BOT_KEY)
 storage = RedisStorage2(host=REDIS_HOST, port=REDIS_PORT, password=REDIS_PASSWORD,
                         db=REDIS_DB, pool_size=10, prefix=REDIS_PREFIX)
 dp = Dispatcher(bot, storage=storage)
@@ -47,6 +48,11 @@ HANDLERS = [
 
 def handlers_create():
     [dp.register_message_handler(h['handler'], state=h['state'], content_types=h['content_types']) for h in HANDLERS]
+    dp.register_callback_query_handler(
+        handler_order_confirming,
+        lambda c: c.data == 'order_confirm',
+        state=Form.all_states,
+    )
 
 
 def start_bot():
